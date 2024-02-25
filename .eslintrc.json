@@ -1,0 +1,22 @@
+{
+  "extends": [
+    "airbnb-base",
+    "plugin:vue/essential",
+    "prettier"
+  ],
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "overrides": [
+    {
+      "files": ["*.vue"],
+      "rules": {
+        "max-len": ["error", { "code": 120 }]
+      }
+    }
+  ]
+}

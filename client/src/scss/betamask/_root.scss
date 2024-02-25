@@ -1,0 +1,14 @@
+/* stylelint-disable import-notation */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+/* stylelint-enable import-notation */
+
+/* stylelint-disable declaration-property-unit-disallowed-list */
+html {
+  font-size: 10px; // For easy conversion of px to rem, 18px = 1.8rem
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+}

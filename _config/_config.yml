@@ -1,0 +1,28 @@
+---
+Name: betamaskbao_middleware
+After:
+  - coresecurity
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Control\Director:
+    properties:
+      Middlewares:
+        InitTopBarMiddleware: '%$SilverStripe\Betamask\Frontend\TopBar\Middleware\InitTopBarMiddleware'
+---
+Name: betamaskbao_ext
+---
+SilverStripe\Control\Controller:
+  extensions:
+    - SilverStripe\Betamask\Frontend\TopBar\Extension\InitController
+
+---
+Name: betamaskbao_featureflag
+After: featureflag
+---
+# Features enable/disable by each CMS user
+SilverStripe\FeatureFlag\Extension\MemberConfiguration:
+  features:
+    FeatureFlag_BetamaskFrontend:
+      Label: 'Betamask (Frontend Bar)'
+      Help: |
+        Enable Betamask frontend top bar. It can't be used if Fabricator is enabled.

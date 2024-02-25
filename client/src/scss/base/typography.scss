@@ -1,0 +1,50 @@
+/**
+ * Base typography
+ */
+body {
+  color: $color-black;
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-regular;
+  letter-spacing: -.02rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Headings */
+h1 {
+  font-size: $font-size-h1;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h1;
+}
+
+h2 {
+  font-size: $font-size-h2;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h2;
+}
+
+h3 {
+  font-size: $font-size-h3;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h3;
+}
+
+h4 {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h4;
+}
+
+h5 {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h5;
+}
+
+h6 {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-h6;
+}

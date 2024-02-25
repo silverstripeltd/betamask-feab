@@ -1,0 +1,47 @@
+/* stylelint-disable declaration-no-important */
+.cms
+.menu__icon,
+.cms-login-status__profile-link i, .cms-login-status .cms-login-status__logout-link {
+  color: $color-red;
+}
+
+.branded-menu.branded-menu--child > li.current > a > .menu__icon {
+  color: $color-red;
+}
+
+.font-icon-sitemap::before {
+  content: url('../../icons/iconssitetree.svg');
+  position: relative;
+}
+
+.font-icon-torso::before {
+  content: url('../../icons/user.svg');
+  position: relative;
+}
+
+.font-icon-white-question::before {
+  content: url('../../icons/help.svg');
+  position: relative;
+}
+
+.font-icon-left-open-big {
+  background-image: url('../../icons/chev-left-blue.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: $color-blue-pale-100;
+  width: 0.7rem;
+  height: 1.2rem;
+
+  &:hover {
+    opacity: 1 !important;
+    background-color: $color-blue-pale-200 !important;
+  }
+
+  &:focus,
+  &:focus-visible {
+    background-color: $color-blue-pale-100 !important;
+    border-color: $color-blue-pale-100 !important;
+    outline: .2rem solid $color-blue-bright;
+    box-shadow: none;
+  }
+}

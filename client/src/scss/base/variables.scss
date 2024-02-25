@@ -1,0 +1,149 @@
+/**
+ * Application variables
+ */
+$icon-path: '../../icons' !default;
+$image-path: '../../images' !default;
+
+/* Colors */
+$color-black: #292B2E;
+
+$color-blue: #0071C4;
+$color-blue-light: #E8F5FF;
+$color-blue-pale: #E3EEFF;
+$color-blue-royal: #003E94;
+$color-blue-bright: #005AE1;
+
+$color-blue-grey-100: #F1F3F6;
+$color-blue-grey-200: #566B8D;
+$color-blue-grey-300: #43536D;
+$color-blue-grey-400: #303B4D;
+
+$color-blue-100: #F8FAFC;
+$color-blue-200: #E6EDF4;
+$color-blue-300: #CDDBEA;
+$color-blue-400: #A9C2DA;
+
+$color-green-100: #008A00;
+$color-green-200: #006400;
+$color-green-300: #005700;
+
+$color-grey-100: #DCDEE0;
+$color-grey-200: #F1F3F3;
+$color-grey-300: #EEF0F4;
+$color-grey-400: #DCDEE0;
+$color-grey-500: #C1C4C8;
+$color-grey-600: #A6AAB0;
+$color-grey-700: #8B9098;
+$color-grey-800: #71767F;
+$color-grey-900: #595D64;
+
+$color-blue-pale-100: #E5F0FF;
+$color-blue-pale-200: #CCE1FF;
+
+$color-orange: #CB3E00;
+$color-orange-light: #FFF2EA;
+
+$color-red: #DA2729;
+$color-yellow: #FFC107;
+$color-white: #FFF;
+
+/* shadows */
+$shadow-top-bar: #0000000D;
+
+/* Badge colors */
+$color-badge-danger: $color-red;
+$color-badge-dark: $color-blue-grey-400;
+$color-badge-info: $color-blue;
+$color-badge-light: $color-grey-300;
+$color-badge-primary: $color-green-100;
+$color-badge-secondary: $color-blue-grey-200;
+$color-badge-warning: $color-yellow;
+
+// borders
+$color-border-default: #D4DBE5;
+
+/* State colors: DRAFT/MODIFIED */
+$color-state-orange: #F46B00;
+
+/* Shadows */
+$color-shadow: #006400;
+
+/* Environment label colours */
+$color-env-dev: #EDEDED;
+$color-env-test: #DDEBFF;
+$color-env-uat: #FEF4C9;
+$color-env-prod: #DDF9DE;
+
+/* Fonts */
+$font-family-sans-serif: 'Inter', sans-serif;
+$font-family-base: $font-family-sans-serif;
+
+/* Font weights */
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+
+/* Font sizes */
+$font-size-base: 1.4rem !default;
+
+$font-size-h1: 2rem !default;
+$font-size-h2: 1.8rem !default;
+$font-size-h3: 1.6rem !default;
+$font-size-h4: 1.4rem !default;
+$font-size-h5: 1.3rem !default;
+$font-size-h6: 1.2rem !default;
+
+$font-size-paragraph: $font-size-base !default;
+$font-size-lead: 1.5rem !default;
+$font-size-meta: 1.1rem !default;
+$font-size-small: 1.1rem !default;
+$font-size-status: 1rem !default;
+
+$font-size-label: $font-size-base !default;
+$font-size-placeholder: $font-size-base !default;
+$font-size-field-label: $font-size-h4 !default;
+$font-size-field-text: $font-size-base !default;
+$font-size-field-description: 1.2rem !default;
+
+$font-size-block-heading: 1.4rem !default;
+$font-size-block-heading-placeholder: 1.4rem !default;
+
+$font-size-button: 1.4rem !default;
+$font-size-button-small: 1.2rem !default;
+
+$font-size-toolbar-heading: 1.6rem !default;
+$font-size-toolbar-breadcrumbs: 1.1rem !default;
+
+
+/* Line heights */
+$line-height-base: 1.6 !default;
+
+$line-height-h1: 1.3 !default;
+$line-height-h2: 1.2 !default;
+$line-height-h3: 1.2 !default;
+$line-height-h4: 1.2 !default;
+$line-height-h5: 1.2 !default;
+$line-height-h6: 1.2 !default;
+
+$line-height-paragraph: $line-height-base !default;
+$line-height-lead: 1.4 !default;
+$line-height-meta: 1.1 !default;
+$line-height-small: 1.4 !default;
+$line-height-status: 1.2 !default;
+
+$line-height-label: $line-height-base !default;
+$line-height-placeholder: 1.3 !default;
+$line-height-field-label: $line-height-h4 !default;
+$line-height-field-text: $line-height-base !default;
+$line-height-field-description: 1.4 !default;
+
+$line-height-block-heading: 1.3 !default;
+$line-height-block-heading-placeholder: 1.3 !default;
+
+$line-height-button: 1.1 !default;
+$line-height-button-small: 1.1 !default;
+
+$line-height-toolbar-heading: 1.3 !default;
+$line-height-toolbar-breadcrumbs: 1.1 !default;
+
+$media-mobile: 768px;

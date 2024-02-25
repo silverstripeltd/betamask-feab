@@ -1,0 +1,56 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-recommended-vue",
+    "stylelint-config-prettier"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.(scss|css|html|vue)"],
+      "customSyntax": "postcss-scss"
+    },
+    {
+      "files": ["**/*.(html|vue)"],
+      "customSyntax": "postcss-html"
+    }
+  ],
+  "plugins": [
+      "stylelint-scss"
+  ],
+  "rules": {
+    "indentation": 2,
+    "color-hex-case": ["upper", { "severity": "warning" }],
+    "max-nesting-depth": [4, { "severity": "warning" }],
+    "selector-max-id": [0, { "severity": "warning" }],
+    "declaration-no-important": [true, { "severity": "warning" }],
+    "declaration-property-unit-disallowed-list": [{
+        "line-height": ["px", "rem", "em"],
+        "font-size": ["px"]
+    }],
+    "declaration-property-value-disallowed-list": [{
+        "border": ["none"]
+    }],
+    "function-url-scheme-disallowed-list": ["/^http/"],
+    "function-url-quotes": ["always"],
+    "string-quotes": ["single"],
+    "at-rule-no-unknown": null,
+    "annotation-no-unknown": null,
+    "no-descending-specificity": null,
+    "block-no-empty": true,
+    "no-extra-semicolons": true,
+    "length-zero-no-unit": true,
+    "selector-no-vendor-prefix": true,
+    "keyframe-declaration-no-important": true,
+    "block-opening-brace-space-before": "always",
+    "declaration-colon-space-after": "always-single-line",
+    "rule-empty-line-before": ["always", {"ignore": ["after-comment", "first-nested"]}],
+    "selector-class-pattern": null,
+    "scss/at-rule-no-unknown": true,
+    "scss/at-import-no-partial-leading-underscore": true,
+    "scss/dollar-variable-colon-space-after": "at-least-one-space",
+    "scss/dollar-variable-no-missing-interpolation": true,
+    "scss/media-feature-value-dollar-variable": ["always", { "severity": "warning" }],
+    "scss/selector-no-redundant-nesting-selector": true,
+    "scss/no-duplicate-dollar-variables": true
+  }
+}

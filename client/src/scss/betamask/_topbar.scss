@@ -1,0 +1,108 @@
+@import '../base/variables';
+
+.topbar {
+  $block: &;
+
+  width: calc(100% - 4rem);
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background: white;
+  box-shadow: 0 0.3rem 0.9rem 0 $shadow-top-bar;
+  padding: 0 2rem;
+  height: 6.6rem;
+  z-index: 999;
+  font-family: $font-family-sans-serif;
+  border-bottom: .1rem solid $color-grey-400;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+
+    @include media-breakpoint-down(md) {
+      gap: 2rem;
+    }
+  }
+
+  &__logo {
+    z-index: 99;
+  }
+
+  &__logo-img {
+    vertical-align: middle;
+    border-style: none;
+  }
+
+  &__divider {
+    width: .1rem;
+    height: 2.6rem;
+    background: $color-grey-500;
+
+    @include media-breakpoint-down(md) {
+      display: none;
+      visibility: hidden;
+    }
+  }
+
+  &__name {
+    color: $color-black;
+    font-size: 1.6rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      color: $color-black;
+    }
+
+    @include media-breakpoint-down(sm) {
+      display: none;
+      visibility: hidden;
+    }
+  }
+
+  &__env {
+    --color: #{$color-env-dev}; // --dev colour
+
+    background: var(--color, #{$color-env-dev});
+    color: $color-black;
+    padding: 0.4315rem 0.863rem;
+    border-radius: 0.2rem;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-left: 0;
+    font-size: 1rem;
+    font-weight: $font-weight-regular;
+
+    &--test {
+      --color: #{$color-env-test};
+    }
+
+    &--uat {
+      --color: #{$color-env-uat};
+    }
+
+    &--prod {
+      --color: #{$color-env-prod};
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 1.4rem;
+    margin-left: auto;
+
+    @include media-breakpoint-down(md) {
+      gap: 1rem;
+    }
+  }
+
+  &__action {
+    display: flex;
+    align-items: center;
+  }
+}

@@ -1,0 +1,112 @@
+@import 'variables';
+
+/**
+ * Buttons
+ */
+/* stylelint-disable declaration-no-important */
+.btn {
+  font-size: $font-size-button;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-button;
+
+  &[class*='font-icon-']:not(.tip) {
+    align-items: center;
+    border-radius: 0.4rem;
+    display: flex;
+    padding: 0.8rem;
+
+    &::before {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    &.btn-outline-primary {
+      padding: 0.7rem 1.2rem;
+    }
+  }
+
+  &[class*=font-icon-menu-help]::before {
+    font-size: 2rem;
+    margin-top: 0.1rem;
+    display: inline-block;
+  }
+}
+
+.btn-sm {
+  font-size: $font-size-button-small;
+  line-height: $line-height-button-small;
+}
+
+.btn-primary {
+  font-weight: $font-weight-medium;
+}
+
+.btn-secondary {
+  color: $color-grey-900;
+
+  &:not(:disabled) {
+    &:hover,
+    &:focus,
+    &:active:focus,
+    &:active:hover {
+      background-color: $color-grey-200;
+      color: $color-grey-900;
+      box-shadow: none !important;
+    }
+  }
+}
+
+.btn-outline-secondary {
+  border-color: $color-blue-bright;
+  border-radius: 0.4rem;
+  color: $color-blue-bright;
+  padding: 0.6rem 1.2rem;
+
+  &:not(:disabled) {
+    &:hover,
+    &:focus,
+    &:active:focus,
+    &:active:hover {
+      background-color: $color-blue-bright;
+      border-color: $color-blue-bright;
+      color: $color-white;
+    }
+  }
+}
+
+.cms-content-addpage-button {
+  font-size: $font-size-button-small;
+  line-height: $line-height-button;
+}
+
+.cms-content-batchactions-button {
+  color: $color-grey-900;
+  font-size: $font-size-button-small;
+  line-height: $line-height-button;
+
+  &::before {
+    color: $color-black;
+  }
+}
+
+.page-view-link {
+  color: $color-grey-900;
+}
+
+.btn-group {
+  margin-right: 1.5rem;
+
+  /* stylelint-disable-next-line selector-not-notation */
+  > .btn:not(:last-child):not(.dropdown-toggle),
+  > .btn-group:not(:last-child) > .btn {
+    border-bottom-right-radius: 0.4rem;
+    border-top-right-radius: 0.4rem;
+    margin-right: 1.5rem;
+  }
+}
+
+/* stylelint-disable-next-line selector-not-notation */
+.btn-outline-primary:not(:disabled):not(.disabled):hover {
+  border-color: $color-green-100;
+  color: $color-green-100;
+}

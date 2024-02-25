@@ -1,0 +1,13 @@
+@import '~bootstrap/scss/mixins/breakpoints';
+
+/**
+  Unlike bespoke standards, product uses the breakpoints defined otb from bootstrap
+*/
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);

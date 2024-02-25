@@ -1,0 +1,15 @@
+@import '../base/variables';
+
+.version {
+  padding: 1.2rem 1rem 0.6rem;
+
+  &__number {
+    background: $color-blue-bright;
+    color: $color-white;
+    border-radius: 0.3rem;
+    padding: 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+}

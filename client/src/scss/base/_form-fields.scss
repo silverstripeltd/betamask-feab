@@ -1,0 +1,116 @@
+/**
+ * Form fields
+ */
+/* stylelint-disable declaration-no-important */
+.form {
+  &__field {
+    &-description {
+      font-size: 1.3rem;
+      font-weight: $font-weight-regular;
+      line-height: $line-height-small;
+      font-style: normal;
+      margin: 1rem 0 0;
+      width: 100%;
+    }
+
+    &-extra-label {
+      font-size: 1.3rem;
+      font-weight: $font-weight-regular;
+      line-height: $line-height-small;
+      font-style: normal;
+      margin: 1rem 0 0;
+      padding: 0;
+      width: 100%;
+      max-width: 89.5rem;
+
+      @include media-breakpoint-up(lg) {
+        max-width: 75%;
+      }
+
+      @include media-breakpoint-up(xl) {
+        max-width: calc(100% * (2/3));
+      }
+
+      @include media-breakpoint-up(xxl) {
+        max-width: calc(100% * (7/12));
+      }
+    }
+  }
+
+  &__field-label {
+    font-weight: $font-weight-medium;
+    width: calc(100% - 3rem); // accommodate for optional icon on right side
+    max-width: 42rem !important;
+  }
+}
+
+.form-control,
+.field input.text,
+.field textarea,
+.field select {
+  color: $color-black;
+  border-color: $color-grey-600;
+  border-radius: 0.4rem;
+  box-shadow: none;
+  font-size: $font-size-base;
+  height: auto;
+  line-height: 1.4;
+  padding: 1rem 1.5rem;
+}
+
+.field select {
+  padding: 0.86rem 1.2rem;
+}
+
+.form-group .chosen-container-single {
+  .chosen-single {
+    color: $color-black;
+    background: $color-white;
+    border-color: $color-grey-600;
+    border-radius: 0.4rem;
+    font-size: $font-size-base;
+    height: auto;
+    line-height: 1.4;
+    padding: 1rem 1.5rem;
+
+    div {
+      width: 2.9rem;
+
+      b {
+        background: url('../../icons/caret.svg') center no-repeat !important;
+        margin-right: 1.5rem;
+      }
+    }
+  }
+
+  &.chosen-container-active.chosen-with-drop .chosen-single {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .chosen-drop {
+    border-color: $color-grey-600;
+    box-shadow: none;
+    border-bottom-left-radius: 0.4rem !important;
+    border-bottom-right-radius: 0.4rem !important;
+  }
+}
+
+.chosen-container {
+  .chosen-results {
+    color: $color-black !important;
+
+    li {
+      border-radius: 0.4rem;
+      font-size: $font-size-base !important;
+      line-height: 1.4 !important;
+      padding: 0.6rem 1.2rem;
+
+      &.highlighted {
+        background: $color-blue-pale;
+        color: $color-black !important;
+      }
+    }
+  }
+}
+/* stylelint-enable declaration-no-important */

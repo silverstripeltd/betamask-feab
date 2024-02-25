@@ -1,0 +1,15 @@
+# Default OS files
+.DS_Store
+.idea
+.env
+
+# Frontend files
+node_modules/
+yarn-error.log
+resources/
+public/
+_resources/
+
+/vendor/
+assets/
+composer.lock
