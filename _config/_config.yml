@@ -25,4 +25,4 @@ SilverStripe\FeatureFlag\Extension\MemberConfiguration:
     FeatureFlag_BetamaskFrontend:
       Label: 'Betamask (Frontend Bar)'
       Help: |
-        Enable Betamask frontend top bar. It can't be used if Fabricator is enabled.
+        Enabling this feature will add an admin tool bar to the front-end of your website.
