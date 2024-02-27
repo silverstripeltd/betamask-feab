@@ -13,7 +13,7 @@ require("dotenv").config();
 // define paths
 const srcFolder = `./client/src`;
 const distFolder = `./client/dist`;
-const publicFolder = `/_resources/vendor/silverstripeltd/betamask/client/dist`; // TODO remove hardcode
+const publicFolder = `/_resources/vendor/silverstripeltd/betamask-bao/client/dist`; // TODO remove hardcode
 
 const sassOptions = {
   sassOptions: {
