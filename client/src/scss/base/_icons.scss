@@ -1,3 +1,5 @@
+@import 'variables';
+
 /* stylelint-disable declaration-no-important */
 .cms
 .menu__icon,
@@ -10,22 +12,22 @@
 }
 
 .font-icon-sitemap::before {
-  content: url('../../icons/iconssitetree.svg');
+  content: url('#{$icon-path}/iconssitetree.svg');
   position: relative;
 }
 
 .font-icon-torso::before {
-  content: url('../../icons/user.svg');
+  content: url('#{$icon-path}/user.svg');
   position: relative;
 }
 
 .font-icon-white-question::before {
-  content: url('../../icons/help.svg');
+  content: url('#{$icon-path}/help.svg');
   position: relative;
 }
 
 .font-icon-left-open-big {
-  background-image: url('../../icons/chev-left-blue.svg');
+  background-image: url('#{$icon-path}/chev-left-blue.svg');
   background-repeat: no-repeat;
   background-position: center;
   background-color: $color-blue-pale-100;
