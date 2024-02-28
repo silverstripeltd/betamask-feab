@@ -6,7 +6,7 @@
   <% require css("silverstripe/admin: client/dist/styles/bundle.css") %>
   <% require css("silverstripeltd/betamask-bao: client/dist/betamask-ui.css") %>
   <title>{$Title}</title>
-  <link rel="icon" type="image/png" href="{$Favicon}"/>
+<%--  <link rel="icon" type="image/png" href="{$Favicon}"/>--%>
 </head>
 <body class="betamaskui">
 <div class="betamaskui__app" id="betamaskui">

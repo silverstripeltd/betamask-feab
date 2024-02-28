@@ -287,7 +287,7 @@ class TopBarUI
         return SSViewer::execute_template(
             BASE_PATH . '/vendor/silverstripeltd/betamask-bao/templates/SilverStripe/Frontend/TopBar.ss',
             ArrayData::create([
-                'Favicon' => ModuleResourceLoader::resourceURL(self::config()->get('favicon')),
+//                'Favicon' => ModuleResourceLoader::resourceURL(self::config()->get('favicon')),
                 'FrameURL' => $this->iframeUrl,
                 'AppName' => $this->getAppName(),
                 'AppEnv' => $this->getEnvironmentLabel(),
