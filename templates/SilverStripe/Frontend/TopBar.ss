@@ -26,7 +26,7 @@
         src="{$FrameURL}"
         loading="eager"
         referrerpolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin">
+        sandbox="allow-scripts allow-same-origin allow-popups">
     </iframe>
   </div>
 </div>
