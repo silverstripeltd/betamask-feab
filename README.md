@@ -1,4 +1,4 @@
-# Betamask CMS theme
+# Betamask Admin Overlay
 
 Adds a feature-flagged utility bar with the theming of [betamask](https://github.com/silverstripeltd/betamask) to your front-end
 
