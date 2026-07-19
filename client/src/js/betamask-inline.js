@@ -20,6 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const url = new URL(newUrl);
+
+      // Only rewrite internal (same-origin) links. External links, as well as
+      // mailto:, tel: and javascript: hrefs, have a different origin and must be
+      // left untouched - otherwise they get a bogus InlinePreview param appended
+      // and would try to load inside the preview iframe.
+      if (url.origin !== window.location.origin) {
+        return null;
+      }
+
       url.searchParams.set('InlinePreview', '1');
 
       return url.href;

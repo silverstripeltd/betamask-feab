@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace SilverStripe\Betamask\Frontend\TopBar\Middleware;
 
@@ -10,12 +10,12 @@ use SilverStripe\Control\Middleware\HTTPCacheControlMiddleware;
 use SilverStripe\Control\Middleware\HTTPMiddleware;
 
 /**
- * @phpcs:disable SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingAnyTypeHint
+ * Middleware to initialize the TopBar interface
  */
 class InitTopBarMiddleware implements HTTPMiddleware
 {
 
-    public function process(HTTPRequest $request, callable $delegate)
+    public function process(HTTPRequest $request, callable $delegate): HTTPResponse
     {
         // Ensure cache disabled
         HTTPCacheControlMiddleware::singleton()->disableCache(true);

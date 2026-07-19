@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace SilverStripe\Betamask\Frontend\TopBar;
 
 use DomainException;
 use SilverStripe\Admin\AdminRootController;
 use SilverStripe\Admin\LeftAndMain;
-use SilverStripe\Betamask\Extension;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\FeatureFlag\FeatureFlag;
@@ -16,8 +16,8 @@ use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\SiteConfig\SiteConfig;
-use SilverStripe\View\ArrayData;
-use SilverStripe\View\SSViewer;
+use SilverStripe\TemplateEngine\SSTemplateEngine;
+use SilverStripe\View\ViewLayerData;
 use Throwable;
 
 /**
@@ -34,6 +34,15 @@ class TopBarUI
 
     use Configurable;
     use Injectable;
+
+    private const string ENV_DEV = 'dev';
+    private const string ENV_UAT = 'uat';
+    private const string ENV_TEST = 'test';
+
+    private static array $environments = [
+        self::ENV_DEV => 'dev',
+        'live' => 'prod',
+    ];
 
     /**
      * Location of the application favicon
@@ -84,7 +93,23 @@ class TopBarUI
      */
     public function getEnvironmentLabel(): string
     {
-        return Extension\LeftAndMain::getEnvironmentLabel();
+        $env = (string) Environment::getEnv('SS_ENVIRONMENT_TYPE');
+
+        // If environment type defined in config, return its value
+        if (array_key_exists($env, self::$environments)) {
+            return self::$environments[$env];
+        }
+
+        // For test environments, find UAT or Test
+        $uatCwp = (string) Environment::getEnv('CWP_ENVIRONMENT');
+        $uatCloud = (string) Environment::getEnv('CL_ENVIRONMENT');
+
+        if (str_contains($uatCwp, 'uat') || str_contains($uatCloud, 'uat')) {
+            return self::ENV_UAT;
+        }
+
+        // Default is always test
+        return self::ENV_TEST;
     }
 
     /**
@@ -154,9 +179,9 @@ class TopBarUI
                     'icon' => 'font-icon-white-question',
                     'label' => 'Help',
                     'items' => $this->getHelpLinks(),
-                    'heading' => (string)SSViewer::execute_template(
+                    'heading' => (string)SSTemplateEngine::execute_template(
                         BASE_PATH . '/vendor/silverstripeltd/betamask-bao/templates/SilverStripe/Frontend/TopBarVersion.ss',
-                        ArrayData::create([
+                        ViewLayerData::create([
                             'CMSVersionNumber' => LeftAndMain::singleton()->CMSVersionNumber(),
                         ]),
                     ),
@@ -284,14 +309,20 @@ class TopBarUI
             throw new DomainException('Unable to find the iframe URL.');
         }
 
-        return SSViewer::execute_template(
+        // Render the wrapper as a self-contained document. Its CSS/JS are linked
+        // directly in the template (see TopBar.ss) rather than via the Requirements
+        // API, so the actual page's requirements (app theme CSS etc.) - registered
+        // while the middleware rendered the iframe content - are NOT leaked into
+        // this chrome. The real page loads its own CSS inside the iframe.
+        return SSTemplateEngine::execute_template(
             BASE_PATH . '/vendor/silverstripeltd/betamask-bao/templates/SilverStripe/Frontend/TopBar.ss',
-            ArrayData::create([
-//                'Favicon' => ModuleResourceLoader::resourceURL(self::config()->get('favicon')),
+            ViewLayerData::create([
+                'Favicon' => ModuleResourceLoader::resourceURL(self::config()->get('favicon')),
                 'FrameURL' => $this->iframeUrl,
                 'AppName' => $this->getAppName(),
                 'AppEnv' => $this->getEnvironmentLabel(),
                 'LogoUrl' => $this->getLogoUrl(),
+                'CMSVersionNumber' => LeftAndMain::singleton()->CMSVersionNumber(),
                 'ItemsAsJson' => $this->getItemsAsJson(),
             ]),
         );

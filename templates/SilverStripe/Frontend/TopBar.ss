@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <% require css("silverstripe/admin: client/dist/styles/bundle.css") %>
-  <% require css("silverstripeltd/betamask-bao: client/dist/betamask-ui.css") %>
+  <%-- Link assets directly instead of via the Requirements API. This wrapper is
+       rendered standalone (not through the page controller), so using Requirements
+       would flush the actual page's requirements (app theme CSS etc.) into this
+       chrome. The real page loads its own CSS inside the iframe. --%>
+  <link rel="stylesheet" href="{$resourceURL('silverstripe/admin: client/dist/styles/bundle.css')}">
+  <link rel="stylesheet" href="{$resourceURL('silverstripeltd/betamask-bao: client/dist/betamask-ui.css')}">
   <title>{$Title}</title>
-<%--  <link rel="icon" type="image/png" href="{$Favicon}"/>--%>
+  <link rel="icon" type="image/png" href="{$Favicon}"/>
 </head>
 <body class="betamaskui">
 <div class="betamaskui__app" id="betamaskui">

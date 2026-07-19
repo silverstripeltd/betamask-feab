@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace SilverStripe\Betamask\Frontend\TopBar\Extension;
 
 use PageController;
 use SilverStripe\Control\Controller;
+use SilverStripe\Core\Extension;
 use SilverStripe\FeatureFlag\FeatureFlag;
-use SilverStripe\ORM\DataExtension;
 use SilverStripe\View\Requirements;
 
-class InitController extends DataExtension
+class InitController extends Extension
 {
 
     private array $runOnce = [

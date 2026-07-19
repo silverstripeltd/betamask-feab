@@ -3,8 +3,12 @@
 /* stylelint-enable import-notation */
 
 /* stylelint-disable declaration-property-unit-disallowed-list */
-html {
-  font-size: 10px; // For easy conversion of px to rem, 18px = 1.8rem
+// 10px base so 1rem = 10px (e.g. 1.8rem = 18px). Uses :root (not html) so it
+// overrides silverstripe/admin's `:root { font-size: 13px }` - admin's :root
+// selector outranks a plain `html` selector on specificity and would otherwise
+// scale the whole bar up by 1.3x regardless of stylesheet order.
+:root {
+  font-size: 10px;
 }
 
 html, body {
