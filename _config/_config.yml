@@ -23,6 +23,6 @@ After: featureflag
 SilverStripe\FeatureFlag\Extension\MemberConfiguration:
   features:
     FeatureFlag_BetamaskFrontend:
-      Label: 'Betamask (Frontend Bar)'
+      Label: 'Admin tool bar'
       Help: |
         Enabling this feature will add an admin tool bar to the front-end of your website.
