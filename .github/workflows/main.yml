@@ -10,3 +10,6 @@ jobs:
     uses: silverstripe/gha-ci/.github/workflows/ci.yml@v2
     with:
       endtoend: false
+      # The shared JS job installs silverstripe/admin's packages with Yarn 1,
+      # which admin no longer supports; this module has no JS tests to run.
+      js: false
