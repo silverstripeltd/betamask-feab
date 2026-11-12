@@ -2,14 +2,14 @@
     "name": "silverstripeltd/betamask-bao",
     "description": "Betamask Admin Overlay (BAO)",
     "type": "silverstripe-vendormodule",
-    "homepage": "https://github.com/silverstripeltd/betamask-bao",
+    "homepage": "https://github.com/silverstripeltd/betamask-feab",
     "keywords": [
         "silverstripe",
         "admin",
         "cms"
     ],
     "support": {
-        "issues": "https://github.com/silverstripeltd/betamask-bao/issues"
+        "issues": "https://github.com/silverstripeltd/betamask-feab/issues"
     },
     "authors": [
         {
@@ -57,6 +57,11 @@
     "autoload": {
         "psr-4": {
             "SilverStripe\\Betamask\\Frontend\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SilverStripe\\Betamask\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "dev",
