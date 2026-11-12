@@ -57,6 +57,15 @@ development sites. External links open in the top window.
 
 The framed page is shown in the draft (`Stage`) reading mode unless the URL asks for another stage.
 
+The iframe keeps the bar completely separate from the site: the site's CSS, layout and scripts
+cannot affect the bar, and the bar cannot affect the site. Because the site runs inside a frame:
+
+* The site must allow same-origin framing. `X-Frame-Options: SAMEORIGIN` or
+  `frame-ancestors 'self'` are fine; `DENY` or `'none'` leave the frame blank.
+* Scripts that break out of frames (`if (top !== self) top.location = ...`) take the page out of the bar.
+* Third-party flows that refuse to be framed, such as some payment or sign-in providers, need their
+  form or link to target `_top`. Links to other sites already open in the top window.
+
 ## Configuration
 
 ```yaml
