@@ -92,6 +92,13 @@
         </properties>
     </rule>
 
+    <!-- The sniff aborts unless an order is configured -->
+    <rule ref="SlevomatCodingStandard.Attributes.AttributesOrder">
+        <properties>
+            <property name="orderAlphabetically" type="bool" value="true"/>
+        </properties>
+    </rule>
+
     <rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
         <properties>
             <!-- Set the root namespace for our src dir and phpunit dir. Please change these as required -->

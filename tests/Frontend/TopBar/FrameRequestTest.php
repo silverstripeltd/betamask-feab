@@ -16,6 +16,12 @@ class FrameRequestTest extends SapphireTest
      */
     protected $usesDatabase = false;
 
+    private const array NAVIGATION_HEADERS = [
+        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Sec-Fetch-Dest' => 'document',
+        'Sec-Fetch-Mode' => 'navigate',
+    ];
+
     public function testInlinePreviewParamMarksRequestAsFramed(): void
     {
         $request = $this->createRequest('about-us', ['InlinePreview' => '1']);
@@ -63,11 +69,7 @@ class FrameRequestTest extends SapphireTest
      */
     public static function provideNavigationRequests(): array
     {
-        $navigation = [
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Sec-Fetch-Dest' => 'document',
-            'Sec-Fetch-Mode' => 'navigate',
-        ];
+        $navigation = self::NAVIGATION_HEADERS;
 
         return [
             'browser navigation' => ['about-us', $navigation, true],
