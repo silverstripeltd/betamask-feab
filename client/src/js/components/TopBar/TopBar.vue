@@ -7,7 +7,7 @@
                 </a>
             </div>
             <div class="topbar__divider"></div>
-            <a class="topbar__name" target="_blank" href="/">{{ appName }}</a>
+            <a class="topbar__name" target="_blank" rel="noopener" :href="siteUrl">{{ appName }}</a>
             <span :class="`topbar__env ${appEnvCss}`">{{ appEnv }}</span>
         </div>
 
@@ -27,6 +27,7 @@
                     :open="isOpen(item.id)"
                     :icon="item.icon"
                     :link="item.link"
+                    :target="item.target"
                     :items="item.items"
                 >
                     <template v-if="item.heading" #heading>
@@ -38,7 +39,7 @@
     </div>
 </template>
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import PopupItem from "./PopupItem.vue";
 
 // Props for the component
@@ -49,19 +50,19 @@ const props = defineProps({
     },
     logoAlt: {
         type: String,
-        default: "Silverstripe CMS",
+        default: "Go to the CMS",
     },
     logoUrl: {
         type: String,
         default: "https://silverstripe.org/",
     },
+    siteUrl: {
+        type: String,
+        default: "/",
+    },
     appName: {
         type: String,
         default: "Silverstripe",
-    },
-    appVersion: {
-        type: String,
-        default: "v5.x",
     },
     appEnv: {
         type: String,
@@ -99,35 +100,33 @@ const appEnvCss = computed(() => {
     return ENV.includes(env) ? `topbar__env--${env}` : "";
 });
 
+/**
+ * Applies a message from the page in the iframe (see betamask-inline.js)
+ *
+ * @param {CustomEvent} e
+ */
+const onFrameMessage = (e) => {
+    const detail = e.detail || {};
+
+    Object.entries(detail.urls || {}).forEach(([selector, url]) => {
+        document.querySelector(selector)?.setAttribute("href", url);
+    });
+
+    if (detail.close) {
+        setCurrentOpen(null);
+    }
+
+    if (detail.history?.url) {
+        window.history.replaceState(null, "", detail.history.url);
+        document.title = detail.history.title || document.title;
+    }
+};
+
 onMounted(() => {
-    // On mount we listen to event from the iframe to update URLs from topbar (i.e. update edit page)
-    window.document.addEventListener(
-        "betamaskTopBarLoaded",
-        (e) => {
-            if (e.detail?.urls) {
-                Object.keys(e.detail.urls).forEach((key) => {
-                    document
-                        .querySelector(key)
-                        .setAttribute("href", e.detail.urls[key]);
-                });
-            }
+    document.addEventListener("betamaskTopBarLoaded", onFrameMessage);
+});
 
-            // Close all opened menu items if event received from iframe
-            if (e.detail?.close) {
-                setCurrentOpen(null);
-            }
-
-            // Update browser address bar
-            if (e.detail?.history) {
-                window.history.replaceState(
-                    e.detail.history,
-                    e.detail.history.title,
-                    e.detail.history.url
-                );
-                document.title = e.detail.history.title;
-            }
-        },
-        false
-    );
+onBeforeUnmount(() => {
+    document.removeEventListener("betamaskTopBarLoaded", onFrameMessage);
 });
 </script>

@@ -1,100 +1,171 @@
+/**
+ * Runs inside the top bar's iframe. Keeps the parent wrapper in sync with the
+ * framed page (address bar, document title, "Edit page" link) and keeps further
+ * navigation inside the frame marked with the InlinePreview parameter.
+ */
+const PARAM = 'InlinePreview';
+const STAGE_PARAM = 'stage';
+const EVENT_NAME = 'betamaskTopBarLoaded';
+const EDIT_LINK_SELECTOR = 'a[data-item="edit"]';
+const EDIT_URL_META = 'meta[name="betamask-page-url"]';
+const WRAPPER_SELECTOR = '#betamaskui-topbar';
 
-document.addEventListener('DOMContentLoaded', () => {
-  /**
-   * Modify URL string and include InlinePreview param
-   *
-   * @param urlString
-   * @returns {string|null}
-   */
-  function modifyUrl(urlString)
-  {
-    if (urlString === '#') {
-      return null;
-    }
-
-    try {
-      let newUrl = urlString;
-
-      if (urlString.indexOf('/') === 0) {
-        newUrl = `${window.location.origin}${urlString}`;
-      }
-
-      const url = new URL(newUrl);
-
-      // Only rewrite internal (same-origin) links. External links, as well as
-      // mailto:, tel: and javascript: hrefs, have a different origin and must be
-      // left untouched - otherwise they get a bogus InlinePreview param appended
-      // and would try to load inside the preview iframe.
-      if (url.origin !== window.location.origin) {
-        return null;
-      }
-
-      url.searchParams.set('InlinePreview', '1');
-
-      return url.href;
-    } catch (e) {
-      //
-    }
-
+/**
+ * The wrapper document, when this page is framed by the top bar on the same origin
+ *
+ * @returns {Document|null}
+ */
+function getWrapperDocument() {
+  if (window.parent === window) {
     return null;
   }
 
-  /**
-   * Update href of an element with new URL from modifyUrl
-   *
-   * @param element
-   */
-  function updateHref(element)
-  {
-    const urlString = element.getAttribute('href');
-    const newUrl = modifyUrl(urlString);
-    if (!newUrl || element.getAttribute('target') === '_blank') {
-      return;
-    }
-    element.setAttribute('href', newUrl);
-    // eslint-disable-next-line no-param-reassign
-    element.href = newUrl;
+  try {
+    const parentDocument = window.parent.document;
+    return parentDocument.querySelector(WRAPPER_SELECTOR) ? parentDocument : null;
+  } catch (e) {
+    // A cross-origin parent is not the top bar
+    return null;
+  }
+}
+
+/**
+ * Same-origin URL for a link target with the frame parameters added, or null when
+ * the link leaves the site or is not a page navigation
+ *
+ * @param {string} href
+ * @returns {URL|null}
+ */
+function toFrameUrl(href) {
+  if (!href || href.startsWith('#')) {
+    return null;
   }
 
-  // Update all links within the page in the iframe to include InlinePreview=1 param
-  // so that the view is always rendered as expected for iframe (without topbar)
-  const links = document.querySelectorAll('a');
-  links.forEach(element => {
-    updateHref(element);
-  });
+  let url;
+  try {
+    url = new URL(href, document.baseURI);
+  } catch (e) {
+    return null;
+  }
 
-  // Remove InlinePreview from current URL and update main window
-  const url = new URL(window.location.href);
-  url.searchParams.delete('InlinePreview');
+  if (url.origin !== window.location.origin) {
+    return null;
+  }
 
-  // Send a message to parent window about action to update in main window
-  // urls: update URL of <css selector><url>
-  window.parent.document.dispatchEvent(new CustomEvent('betamaskTopBarLoaded', {
-    detail: {
-      urls: {
-        'a[data-item="topbar-1"]': document.querySelector('meta[name=\'betamask-page-url\']').getAttribute('content')
-      },
-      history: {
-        title: document.title,
-        url: url.href,
-      }
-    },
-  }));
+  const current = new URL(window.location.href);
+  url.searchParams.set(PARAM, '1');
+  if (!url.searchParams.has(STAGE_PARAM) && current.searchParams.has(STAGE_PARAM)) {
+    url.searchParams.set(STAGE_PARAM, current.searchParams.get(STAGE_PARAM));
+  }
 
-  // Any click in iframe
-  document.addEventListener('click', (e) => {
+  return url;
+}
 
-    // ensure URL include InlinePreviews
-    if (e.target && e.target?.href) {
-      updateHref(e.target);
+/**
+ * Keeps an internal link inside the frame, and sends external links to the top
+ * window, as most external sites refuse to be framed
+ *
+ * @param {HTMLAnchorElement} link
+ */
+function prepareLink(link) {
+  const target = link.getAttribute('target');
+  if (target && target !== '_self') {
+    return;
+  }
+
+  const href = link.getAttribute('href');
+  const url = toFrameUrl(href);
+
+  if (url) {
+    link.setAttribute('href', url.href);
+    return;
+  }
+
+  if (href && /^https?:/i.test(href)) {
+    link.setAttribute('target', '_top');
+  }
+}
+
+/**
+ * Keeps a same-site form submission marked as framed. GET forms replace the
+ * query string on submit, so their frame parameters travel as hidden fields;
+ * other methods keep them in the action URL.
+ *
+ * @param {HTMLFormElement} form
+ */
+function prepareForm(form) {
+  const action = form.getAttribute('action') || window.location.href;
+  const url = toFrameUrl(action);
+  if (!url) {
+    return;
+  }
+
+  if ((form.getAttribute('method') || 'get').toLowerCase() !== 'get') {
+    form.setAttribute('action', url.href);
+    return;
+  }
+
+  [PARAM, STAGE_PARAM].forEach((name) => {
+    const value = url.searchParams.get(name);
+    if (value === null || form.querySelector(`input[name="${name}"]`)) {
+      return;
     }
-
-    // Close all topbar open dropdown
-    window.parent.document.dispatchEvent(new CustomEvent('betamaskTopBarLoaded', {
-      detail: {
-        close: 'all',
-      },
-    }));
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
   });
-});
+}
 
+/**
+ * @param {Document} wrapper
+ * @param {object} detail
+ */
+function notifyWrapper(wrapper, detail) {
+  wrapper.dispatchEvent(new CustomEvent(EVENT_NAME, { detail }));
+}
+
+function init() {
+  const wrapper = getWrapperDocument();
+  if (!wrapper) {
+    return;
+  }
+
+  document.querySelectorAll('a[href]').forEach(prepareLink);
+
+  const pageUrl = new URL(window.location.href);
+  pageUrl.searchParams.delete(PARAM);
+
+  const editUrl = document.querySelector(EDIT_URL_META)?.getAttribute('content');
+
+  notifyWrapper(wrapper, {
+    urls: editUrl ? { [EDIT_LINK_SELECTOR]: editUrl } : {},
+    history: {
+      title: document.title,
+      url: pageUrl.href,
+    },
+  });
+
+  // Capture phase, so links and forms added after load are prepared before the
+  // browser acts on them. Nothing here cancels the event.
+  document.addEventListener('click', (e) => {
+    const link = e.target instanceof Element ? e.target.closest('a[href]') : null;
+    if (link) {
+      prepareLink(link);
+    }
+    notifyWrapper(wrapper, { close: 'all' });
+  }, true);
+
+  document.addEventListener('submit', (e) => {
+    if (e.target instanceof HTMLFormElement) {
+      prepareForm(e.target);
+    }
+  }, true);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

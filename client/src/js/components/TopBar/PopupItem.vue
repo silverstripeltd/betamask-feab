@@ -3,7 +3,7 @@
         <component
             :is="component"
             class="popup__btn"
-            :aria-controls="isLink ? null : props.cssId"
+            :aria-controls="isLink ? null : menuId"
             :type="isLink ? null : 'button'"
             :aria-expanded="isLink ? null : String(isOpen)"
             @click="toggle"
@@ -11,10 +11,13 @@
             @keydown.space.prevent="handleKeyDownSpace"
             @blur.prevent="close"
             :href="props.link"
+            :target="isLink ? props.target : null"
+            :rel="isLink && props.target === '_blank' ? 'noopener' : null"
             :data-item="props.cssId"
         >
             <i
                 v-if="icon"
+                aria-hidden="true"
                 :class="{
                     [icon]: true,
                     popup__icon: true,
@@ -23,6 +26,7 @@
             <span class="popup__label">{{ label }}</span>
             <i
                 v-if="!isLink"
+                aria-hidden="true"
                 :class="{
                     'font-icon-caret-down-two': true,
                     popup__arrow: true,
@@ -34,7 +38,7 @@
         <div
             v-if="items?.length || hasSlot('heading')"
             v-show="isOpen"
-            :id="props.cssId"
+            :id="menuId"
             class="popup__content"
         >
             <ul class="popup__menu">
@@ -47,14 +51,14 @@
 
                 <li
                     v-for="item in items"
-                    :key="item.title"
+                    :key="item.link"
                     class="popup__item popup__item--black"
                 >
                     <a
                         class="popup__link"
                         :href="item.link"
                         :target="item.target"
-                        rel="noopener noreferrer"
+                        :rel="item.target === '_blank' ? 'noopener' : null"
                         >{{ item.label }}</a
                     >
                 </li>
@@ -86,6 +90,10 @@ const props = defineProps({
         required: true,
     },
     link: {
+        type: String,
+        default: null,
+    },
+    target: {
         type: String,
         default: null,
     },
@@ -166,6 +174,13 @@ const handleKeyDownSpace = () => {
  * @type {ComputedRef<unknown>}
  */
 const isOpen = computed(() => openInternal.value || props.open);
+
+/**
+ * DOM id of the dropdown, namespaced so item ids cannot clash with other elements
+ *
+ * @type {ComputedRef<string>}
+ */
+const menuId = computed(() => `betamaskui-menu-${props.cssId}`);
 
 /**
  * Check if the component is for a link
