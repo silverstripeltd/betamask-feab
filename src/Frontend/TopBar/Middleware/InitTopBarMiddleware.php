@@ -2,51 +2,85 @@
 
 namespace SilverStripe\Betamask\Frontend\TopBar\Middleware;
 
+use SilverStripe\Betamask\Frontend\TopBar\FrameRequest;
 use SilverStripe\Betamask\Frontend\TopBar\TopBarUI;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTP;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\Middleware\HTTPCacheControlMiddleware;
 use SilverStripe\Control\Middleware\HTTPMiddleware;
+use SilverStripe\Core\Injector\Injectable;
 
 /**
- * Middleware to initialize the TopBar interface
+ * Answers top-level page navigations from members who have the bar enabled with
+ * the top bar wrapper. The page itself is only rendered once, by the wrapper's
+ * iframe, so its status code, headers and side effects all belong to that request.
  */
 class InitTopBarMiddleware implements HTTPMiddleware
 {
 
+    use Injectable;
+
+    public const string RESPONSE_HEADER = 'X-Betamask';
+
     public function process(HTTPRequest $request, callable $delegate): HTTPResponse
     {
-        // Ensure cache disabled
-        HTTPCacheControlMiddleware::singleton()->disableCache(true);
+        $app = TopBarUI::create()->setRequest($request);
 
-        // Instantiate Topbar interface
-        $app = TopBarUI::create();
-        $app->setRequest($request);
-
-        // Check if UI enabled
         if (!$app->isEnabled()) {
-            return $delegate($request);
+            $response = $delegate($request);
+
+            return $this->keepRedirectInFrame($request, $response);
         }
 
-        // Clone http request and modify it for iframe
-        $clone = clone $request;
-        $clone->offsetSet('InlinePreview', 1);
-        $clone->offsetSet('stage', 'Stage');
-        $app->setIframeUrl(Director::absoluteURL($clone->getURL(true)));
+        // The wrapper is personalised per member and must never be cached
+        HTTPCacheControlMiddleware::singleton()->disableCache(true);
 
-        // Instantiate http response to return
-        $response = $delegate($clone);
-        assert($response instanceof HTTPResponse);
+        $app->setIframeUrl($this->getFrameUrl($request, $app->getFrameStage()));
 
-        // Optional add header to indicate we are betamask
-        $response->addHeader('X-Betamask', '1');
+        return HTTPResponse::create($app->getInterface(), 200)
+            ->addHeader('Content-Type', 'text/html; charset=utf-8')
+            ->addHeader(self::RESPONSE_HEADER, '1');
+    }
 
-        // Set betamask interface and return response
-        $response->setBody($app->getInterface());
-        $response->setStatusCode(200);
+    /**
+     * Absolute URL of the current request, marked for the iframe
+     */
+    protected function getFrameUrl(HTTPRequest $request, ?string $stage): string
+    {
+        $vars = $request->getVars();
+        $vars[FrameRequest::INLINE_PREVIEW_PARAM] = '1';
 
-        return $response;
+        if ($stage !== null) {
+            $vars['stage'] = $stage;
+        }
+
+        return Director::absoluteURL($request->getURL()) . '?' . http_build_query($vars);
+    }
+
+    /**
+     * Carries the frame marker through same-site redirects issued inside the
+     * iframe (e.g. after a form submission), so the redirected page is not
+     * mistaken for a top-level navigation by browsers that send no Fetch
+     * Metadata headers, such as on plain-HTTP development sites.
+     */
+    protected function keepRedirectInFrame(HTTPRequest $request, HTTPResponse $response): HTTPResponse
+    {
+        $location = (string) $response->getHeader('Location');
+
+        if (!$request->requestVar(FrameRequest::INLINE_PREVIEW_PARAM)
+            || !$response->isRedirect()
+            || $location === ''
+            || !Director::is_site_url($location)
+        ) {
+            return $response;
+        }
+
+        return $response->addHeader(
+            'Location',
+            HTTP::setGetVar(FrameRequest::INLINE_PREVIEW_PARAM, '1', $location),
+        );
     }
 
 }

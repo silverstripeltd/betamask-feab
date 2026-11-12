@@ -41,9 +41,15 @@ mix.copyDirectory(`${srcFolder}/icons`, `${distFolder}/icons`);
 mix.setPublicPath(distFolder);
 mix.setResourceRoot(publicFolder); // Prefixes urls in processed css with _resources/dist
 
-mix.alias = {
-  'vue': resolve(`./node_modules/vue`),
-};
+// The bar is mounted from a compiled component, so the runtime-only Vue build is
+// enough. It avoids the template compiler, which needs 'unsafe-eval' under a CSP.
+mix.webpackConfig({
+  resolve: {
+    alias: {
+      vue$: resolve('./node_modules/vue/dist/vue.runtime.esm-bundler.js'),
+    },
+  },
+});
 
 /**
  * Setup vue correctly
@@ -53,6 +59,7 @@ mix.webpackConfig({
     new webpack.DefinePlugin({
       __VUE_OPTIONS_API__: true,
       __VUE_PROD_DEVTOOLS__: false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     }),
   ],
 });

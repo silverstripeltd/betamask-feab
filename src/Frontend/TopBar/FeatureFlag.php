@@ -7,28 +7,33 @@ use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Security\Member;
 
 /**
- * Feature flag to manage enable/disable Betamask frontend top bar
+ * Per-member feature flag that turns the front-end top bar on or off
  *
  * @phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
  */
 class FeatureFlag implements FeatureFlagInterface
 {
 
+    public const string NAME = 'BetamaskFrontend';
+
     public function getName(): string
     {
-        return 'BetamaskFrontend';
+        return self::NAME;
     }
 
     /**
-     * Feature enabled at member level. Each member can enable/disable it
+     * Enabled per member from their profile. Members with the Fabricator editor
+     * enabled never get the bar, as Fabricator provides its own front-end chrome.
      */
     public function checkFeature(?Member $member = null): bool
     {
-        return $member instanceof Member && $member->FeatureFlag_BetamaskFrontend && !$member->FabricatorEnabled;
+        return $member instanceof Member
+            && (bool) $member->getField('FeatureFlag_' . self::NAME)
+            && !$member->getField('FabricatorEnabled');
     }
 
     /**
-     * No banner message in CMS to display
+     * The flag shows no banner message in the CMS
      */
     public function showMessage(?Member $member = null): bool
     {
@@ -37,7 +42,7 @@ class FeatureFlag implements FeatureFlagInterface
 
     public function getMessage(): DBField
     {
-        return DBField::create_field('Text', 'Not implemented');
+        return DBField::create_field('Text', '');
     }
 
 }
