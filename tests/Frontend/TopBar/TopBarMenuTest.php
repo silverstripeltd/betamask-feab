@@ -25,6 +25,16 @@ class TopBarMenuTest extends SapphireTest
         $this->assertSame('_top', $items[3]['items'][1]['target']);
     }
 
+    public function testLinksOpenInThePageAndEditPointsAtTheRecord(): void
+    {
+        $items = TopBarMenu::create()->setEditUrl('/admin/pages/edit/show/5')->getItems();
+
+        $this->assertSame('/admin/pages/edit/show/5', $items[0]['link']);
+        $this->assertSame('_top', $items[0]['target']);
+        $this->assertSame('_blank', $items[2]['items'][0]['target'] ?? '_blank');
+        $this->assertSame('_top', $items[3]['items'][1]['target']);
+    }
+
     public function testExtensionsCanAddChangeAndRemoveItems(): void
     {
         TopBarMenu::add_extension(MenuExtension::class);

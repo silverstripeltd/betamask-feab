@@ -147,3 +147,16 @@ $line-height-toolbar-heading: 1.3 !default;
 $line-height-toolbar-breadcrumbs: 1.1 !default;
 
 $media-mobile: 768px;
+
+// Hides content visually while keeping it available to screen readers
+@mixin visually-hidden {
+  position: absolute;
+  width: .1rem;
+  height: .1rem;
+  margin: -.1rem;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

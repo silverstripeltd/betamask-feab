@@ -5,20 +5,11 @@ namespace SilverStripe\Betamask\Frontend\TopBar;
 use SilverStripe\Control\HTTPRequest;
 
 /**
- * Classifies a request by the browsing context it was made from, using the
- * browser's Fetch Metadata headers with fallbacks for browsers that omit them.
- *
- * The top bar renders the real page inside an iframe. Only top-level page
- * navigations are wrapped; requests from that iframe are served normally and
- * load the inline script that keeps the bar in sync with the framed page.
+ * Classifies a request by how the browser made it, using the Fetch Metadata
+ * headers with fallbacks for browsers and origins where they are not sent.
  */
 final class FrameRequest
 {
-
-    /**
-     * Query parameter appended to URLs loaded inside the top bar iframe
-     */
-    public const string INLINE_PREVIEW_PARAM = 'InlinePreview';
 
     /**
      * Query parameter the CMS appends to URLs loaded in its own preview panel
@@ -46,25 +37,11 @@ final class FrameRequest
     }
 
     /**
-     * Whether the request was made from any frame.
-     *
-     * The query parameter covers browsers that do not send Fetch Metadata headers.
+     * Whether the browser reports the request as loading a frame
      */
     public static function isFramed(HTTPRequest $request): bool
     {
-        if ($request->getVar(self::INLINE_PREVIEW_PARAM)) {
-            return true;
-        }
-
         return in_array(self::getHeader($request, self::FETCH_DEST_HEADER), self::FRAME_DESTINATIONS, true);
-    }
-
-    /**
-     * Whether the request is a page navigation inside the top bar iframe
-     */
-    public static function isTopBarFrame(HTTPRequest $request): bool
-    {
-        return self::isFramed($request) && !self::isCmsPreview($request);
     }
 
     /**
@@ -73,7 +50,7 @@ final class FrameRequest
      */
     public static function isPageNavigation(HTTPRequest $request): bool
     {
-        if (self::isFramed($request) || self::hasFileExtension($request)) {
+        if (self::isFramed($request) || self::isCmsPreview($request) || self::hasFileExtension($request)) {
             return false;
         }
 
@@ -111,7 +88,7 @@ final class FrameRequest
 
     /**
      * Page URLs have no file extension; sitemap.xml, robots.txt, feeds and file
-     * downloads do, and are never wrapped.
+     * downloads do.
      */
     private static function hasFileExtension(HTTPRequest $request): bool
     {

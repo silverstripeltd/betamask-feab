@@ -1,7 +1,8 @@
 {
     "/betamask-ui.js": "/betamask-ui.js",
-    "/betamask-inline.js": "/betamask-inline.js",
+    "/betamask-loader.js": "/betamask-loader.js",
     "/betamask-ui.css": "/betamask-ui.css",
+    "/betamask-offset.css": "/betamask-offset.css",
     "/images/caret.svg": "/images/caret.svg",
     "/images/chev-left-blue.svg": "/images/chev-left-blue.svg",
     "/images/help.svg": "/images/help.svg",

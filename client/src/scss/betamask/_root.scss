@@ -9,10 +9,15 @@
 // scale the whole bar up by 1.3x regardless of stylesheet order.
 :root {
   font-size: 10px;
+  // Must match the iframe element's color-scheme, or the browser paints the
+  // iframe opaque and hides the page behind an open menu.
+  color-scheme: light;
 }
 
-html, body {
+html.betamask-html,
+body.betamaskui {
   width: 100%;
   height: 100%;
-  overflow-x: auto;
+  overflow: hidden;
+  background: transparent;
 }

@@ -3,7 +3,7 @@
 namespace SilverStripe\Betamask\Tests\Frontend\TopBar\Middleware;
 
 use SilverStripe\Betamask\Frontend\TopBar\Middleware\InitTopBarMiddleware;
-use SilverStripe\Control\Director;
+use SilverStripe\Betamask\Frontend\TopBar\TopBarContext;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\Middleware\HTTPCacheControlMiddleware;
@@ -19,116 +19,86 @@ class InitTopBarMiddlewareTest extends SapphireTest
      */
     protected $usesDatabase = true;
 
-    private int $delegateCalls = 0;
+    private const string PAGE = '<html><head></head><body><form method="post"></form></body></html>';
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->delegateCalls = 0;
+        TopBarContext::reset();
     }
 
-    public function testWrapsPageNavigationWithoutRenderingThePage(): void
+    public function testAddsTheBarToThePageForFlaggedMembers(): void
     {
-        $this->logInFlaggedMember();
+        $this->logInMember(true);
+        TopBarContext::singleton()->setEditUrl('/admin/pages/edit/show/5')->setStage('Stage');
 
-        $response = $this->process($this->createRequest('about-us', ['ref' => 'nav']));
+        $response = $this->process($this->createRequest('about-us'));
+        $body = (string) $response->getBody();
 
-        $this->assertSame(0, $this->delegateCalls, 'The page must only be rendered by the iframe request');
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('1', $response->getHeader(InitTopBarMiddleware::RESPONSE_HEADER));
-        $this->assertStringContainsString('text/html', (string) $response->getHeader('Content-Type'));
+        $this->assertStringContainsString('<form method="post"></form>', $body);
+        $this->assertStringContainsString('betamask-loader.js', $body);
+        $this->assertStringContainsString('edit=%2Fadmin%2Fpages%2Fedit%2Fshow%2F5&amp;stage=Stage', $body);
         $this->assertTrue(HTTPCacheControlMiddleware::singleton()->hasDirective('no-store'));
-
-        $frameUrl = Director::absoluteURL('about-us') . '?ref=nav&amp;InlinePreview=1&amp;stage=Stage';
-        $this->assertStringContainsString('src="' . $frameUrl . '"', (string) $response->getBody());
     }
 
-    public function testPassesThroughForVisitorsWithoutTheBar(): void
+    public function testKeepsThePageStatusCode(): void
     {
-        $this->logOut();
+        $this->logInMember(true);
+
+        $response = $this->process($this->createRequest('missing'), HTTPResponse::create(self::PAGE, 404));
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertStringContainsString('betamask-loader.js', (string) $response->getBody());
+    }
+
+    public function testLeavesPagesAloneForOtherVisitors(): void
+    {
+        $this->logInMember(false);
 
         $response = $this->process($this->createRequest('about-us'));
 
-        $this->assertSame(1, $this->delegateCalls);
-        $this->assertSame('page', $response->getBody());
-        $this->assertNull($response->getHeader(InitTopBarMiddleware::RESPONSE_HEADER));
+        $this->assertSame(self::PAGE, $response->getBody());
     }
 
-    public function testPassesThroughNonPageRequests(): void
+    public function testLeavesNonPageRequestsAlone(): void
     {
-        $this->logInFlaggedMember();
+        $this->logInMember(true);
         $request = $this->createRequest('about-us');
         $request->addHeader('Accept', 'application/json');
 
-        $response = $this->process($request);
-
-        $this->assertSame(1, $this->delegateCalls);
-        $this->assertSame('page', $response->getBody());
+        $this->assertSame(self::PAGE, $this->process($request)->getBody());
     }
 
-    public function testKeepsSameSiteRedirectsInsideTheFrame(): void
+    public function testLeavesNonHtmlResponsesAlone(): void
     {
-        $this->logInFlaggedMember();
-        $request = $this->createRequest('contact/Form', ['InlinePreview' => '1'], 'POST');
-        $location = Director::absoluteURL('contact/finished') . '?stage=Stage#uff';
+        $this->logInMember(true);
+        $json = HTTPResponse::create('{"a":"</body>"}')->addHeader('Content-Type', 'application/json');
 
-        $response = $this->process($request, HTTPResponse::create()->redirect($location));
-
-        $this->assertSame(
-            Director::absoluteURL('contact/finished') . '?stage=Stage&InlinePreview=1#uff',
-            $response->getHeader('Location'),
-        );
-    }
-
-    public function testLeavesExternalRedirectsAlone(): void
-    {
-        $this->logInFlaggedMember();
-        $request = $this->createRequest('go', ['InlinePreview' => '1']);
-
-        $response = $this->process($request, HTTPResponse::create()->redirect('https://example.org/elsewhere'));
-
-        $this->assertSame('https://example.org/elsewhere', $response->getHeader('Location'));
-    }
-
-    public function testLeavesRedirectsOutsideTheFrameAlone(): void
-    {
-        $this->logInFlaggedMember();
-        $request = $this->createRequest('contact/Form', [], 'POST');
-        $location = Director::absoluteURL('contact/finished');
-
-        $response = $this->process($request, HTTPResponse::create()->redirect($location));
-
-        $this->assertSame($location, $response->getHeader('Location'));
+        $this->assertSame('{"a":"</body>"}', $this->process($this->createRequest('api'), $json)->getBody());
     }
 
     private function process(HTTPRequest $request, ?HTTPResponse $pageResponse = null): HTTPResponse
     {
-        $pageResponse ??= HTTPResponse::create('page', 200);
+        $pageResponse ??= HTTPResponse::create(self::PAGE, 200);
 
-        return InitTopBarMiddleware::create()->process($request, function () use ($pageResponse): HTTPResponse {
-            $this->delegateCalls += 1;
-
-            return $pageResponse;
-        });
+        return InitTopBarMiddleware::create()->process($request, static fn (): HTTPResponse => $pageResponse);
     }
 
-    /**
-     * @param array<string, string> $getVars
-     */
-    private function createRequest(string $url, array $getVars = [], string $method = 'GET'): HTTPRequest
+    private function createRequest(string $url): HTTPRequest
     {
-        $request = new HTTPRequest($method, $url, $getVars);
+        $request = new HTTPRequest('GET', $url);
         $request->addHeader('Accept', 'text/html');
 
         return $request;
     }
 
-    private function logInFlaggedMember(): void
+    private function logInMember(bool $flagged): void
     {
         $member = Member::create([
-            'Email' => 'flagged-editor@example.com',
-            'FeatureFlag_BetamaskFrontend' => true,
+            'Email' => uniqid('editor', true) . '@example.com',
+            'FeatureFlag_BetamaskFrontend' => $flagged,
         ]);
         $member->write();
         $this->logInAs($member);

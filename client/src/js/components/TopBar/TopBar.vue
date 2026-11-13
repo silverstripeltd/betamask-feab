@@ -1,14 +1,44 @@
 <template>
-    <div class="topbar">
+    <div v-if="collapsed" ref="tabRef" class="topbar-tab">
+        <button
+            ref="expandRef"
+            type="button"
+            class="topbar-tab__btn"
+            aria-expanded="false"
+            aria-controls="betamaskui-bar"
+            @click="expand"
+        >
+            <img class="topbar-tab__logo" :src="logo" alt="" />
+            <i class="topbar-tab__arrow font-icon-down-open-big" aria-hidden="true"></i>
+            <span class="topbar-tab__label">Show admin tool bar</span>
+        </button>
+    </div>
+
+    <nav v-else id="betamaskui-bar" ref="barRef" class="topbar" aria-label="Admin tool bar">
         <div class="topbar__brand">
             <div class="topbar__logo">
-                <a class="topbar__logo-link" :href="logoUrl">
+                <a class="topbar__logo-link" :href="logoUrl" target="_top">
                     <img class="topbar__logo-img" :src="logo" :alt="logoAlt" />
                 </a>
             </div>
             <div class="topbar__divider"></div>
             <a class="topbar__name" target="_blank" rel="noopener" :href="siteUrl">{{ appName }}</a>
             <span :class="`topbar__env ${appEnvCss}`">{{ appEnv }}</span>
+            <div v-if="stage" class="topbar__stage" role="group" aria-label="Content version">
+                <button
+                    v-for="option in STAGE_OPTIONS"
+                    :key="option.stage"
+                    type="button"
+                    :class="{
+                        'topbar__stage-btn': true,
+                        'topbar__stage-btn--active': option.stage === stage,
+                    }"
+                    :aria-pressed="String(option.stage === stage)"
+                    @click="showStage(option.stage)"
+                >
+                    {{ option.label }}
+                </button>
+            </div>
         </div>
 
         <div class="topbar__actions">
@@ -35,14 +65,27 @@
                     </template>
                 </PopupItem>
             </div>
+            <button
+                ref="collapseRef"
+                type="button"
+                class="topbar__collapse"
+                aria-expanded="true"
+                aria-controls="betamaskui-bar"
+                @click="collapse"
+            >
+                <i class="font-icon-up-open-big" aria-hidden="true"></i>
+                <span class="topbar__collapse-label">Hide admin tool bar</span>
+            </button>
         </div>
-    </div>
+    </nav>
 </template>
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import {
+    computed, nextTick, onBeforeUnmount, onMounted, ref, watch,
+} from "vue";
 import PopupItem from "./PopupItem.vue";
+import { BarState, MessageType } from "../../betamask-protocol";
 
-// Props for the component
 const props = defineProps({
     logo: {
         type: String,
@@ -54,7 +97,7 @@ const props = defineProps({
     },
     logoUrl: {
         type: String,
-        default: "https://silverstripe.org/",
+        default: "/admin",
     },
     siteUrl: {
         type: String,
@@ -68,31 +111,40 @@ const props = defineProps({
         type: String,
         default: "dev",
     },
+    stage: {
+        type: String,
+        default: "",
+    },
+    collapsed: {
+        type: Boolean,
+        default: false,
+    },
     items: {
         type: Array,
         default: () => [],
     },
 });
 
-// Reference current opened item
-const currentOpen = ref(null);
-// List of supported environment key
 const ENV = ["dev", "test", "uat", "prod"];
+const STAGE_OPTIONS = Object.freeze([
+    { stage: "Stage", label: "Draft" },
+    { stage: "Live", label: "Published" },
+]);
+// Room below an open menu for its shadow, in px of the iframe
+const MENU_SHADOW_SPACE = 16;
 
-/**
- * Method to set current opened item
- * @param id
- */
+const currentOpen = ref(null);
+const collapsed = ref(props.collapsed);
+const barRef = ref(null);
+const tabRef = ref(null);
+const expandRef = ref(null);
+const collapseRef = ref(null);
+let resizeObserver = null;
+
 const setCurrentOpen = (id) => {
     currentOpen.value = id;
 };
 
-/**
- * Whether or not an item is opened. Value also passed to child component
- *
- * @param id
- * @returns {boolean}
- */
 const isOpen = (id) => String(id) === String(currentOpen.value);
 
 const appEnvCss = computed(() => {
@@ -100,33 +152,113 @@ const appEnvCss = computed(() => {
     return ENV.includes(env) ? `topbar__env--${env}` : "";
 });
 
-/**
- * Applies a message from the page in the iframe (see betamask-inline.js)
- *
- * @param {CustomEvent} e
- */
-const onFrameMessage = (e) => {
-    const detail = e.detail || {};
-
-    Object.entries(detail.urls || {}).forEach(([selector, url]) => {
-        document.querySelector(selector)?.setAttribute("href", url);
-    });
-
-    if (detail.close) {
-        setCurrentOpen(null);
-    }
-
-    if (detail.history?.url) {
-        window.history.replaceState(null, "", detail.history.url);
-        document.title = detail.history.title || document.title;
+const notifyPage = (message) => {
+    if (window.parent !== window) {
+        window.parent.postMessage(message, window.location.origin);
     }
 };
 
+/**
+ * Lowest point of any open menu, so the iframe can grow to show it unclipped
+ *
+ * @returns {number}
+ */
+const getOpenMenuBottom = () => {
+    const menus = document.querySelectorAll(".popup__content");
+    return Array.from(menus).reduce((bottom, menu) => {
+        if (!menu.offsetParent) {
+            return bottom;
+        }
+        return Math.max(bottom, menu.getBoundingClientRect().bottom + MENU_SHADOW_SPACE);
+    }, 0);
+};
+
+/**
+ * Tells the page what size the iframe should take for the bar's current state
+ */
+const reportLayout = () => {
+    if (collapsed.value) {
+        const tab = tabRef.value?.getBoundingClientRect();
+        notifyPage({
+            type: MessageType.LAYOUT,
+            state: BarState.COLLAPSED,
+            width: tab?.width || 0,
+            height: tab?.height || 0,
+        });
+        return;
+    }
+
+    const barHeight = barRef.value?.getBoundingClientRect().height || 0;
+    const menuBottom = currentOpen.value ? getOpenMenuBottom() : 0;
+    notifyPage({
+        type: MessageType.LAYOUT,
+        state: menuBottom > barHeight ? BarState.MENU : BarState.EXPANDED,
+        width: null,
+        height: Math.max(barHeight, menuBottom),
+    });
+};
+
+const observe = () => {
+    resizeObserver?.disconnect();
+    const element = collapsed.value ? tabRef.value : barRef.value;
+    if (element && resizeObserver) {
+        resizeObserver.observe(element);
+    }
+};
+
+const collapse = async () => {
+    setCurrentOpen(null);
+    collapsed.value = true;
+    await nextTick();
+    observe();
+    reportLayout();
+    expandRef.value?.focus();
+};
+
+const expand = async () => {
+    collapsed.value = false;
+    await nextTick();
+    observe();
+    reportLayout();
+    collapseRef.value?.focus();
+};
+
+const showStage = (stage) => {
+    if (stage !== props.stage) {
+        notifyPage({ type: MessageType.STAGE, stage });
+    }
+};
+
+/**
+ * Escape closes an open menu, or collapses the bar when no menu is open
+ *
+ * @param {KeyboardEvent} e
+ */
+const onKeydown = (e) => {
+    if (e.key !== "Escape" || collapsed.value) {
+        return;
+    }
+    e.preventDefault();
+    if (currentOpen.value) {
+        const trigger = document.querySelector(`[data-item="${currentOpen.value}"]`);
+        setCurrentOpen(null);
+        trigger?.focus();
+        return;
+    }
+    collapse();
+};
+
+watch(currentOpen, () => nextTick(reportLayout));
+
 onMounted(() => {
-    document.addEventListener("betamaskTopBarLoaded", onFrameMessage);
+    resizeObserver = new ResizeObserver(reportLayout);
+    observe();
+    reportLayout();
+    document.addEventListener("keydown", onKeydown);
 });
 
 onBeforeUnmount(() => {
-    document.removeEventListener("betamaskTopBarLoaded", onFrameMessage);
+    resizeObserver?.disconnect();
+    document.removeEventListener("keydown", onKeydown);
 });
 </script>

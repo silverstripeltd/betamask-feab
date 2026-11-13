@@ -19,7 +19,7 @@ use SilverStripe\View\ViewLayerData;
  * updateItems(array &$items). Items are keyed by id; each item is an array of:
  * - label (string, required): visible text
  * - link (string): makes the item a plain link
- * - target (string): link target, e.g. "_blank"
+ * - target (string): link target, "_top" (the page) by default or e.g. "_blank"
  * - icon (string): admin font icon class, e.g. "font-icon-chart-line"
  * - items (array): dropdown entries, each with label, link and optional target
  * - heading (string): trusted HTML shown at the top of the dropdown
@@ -42,6 +42,24 @@ class TopBarMenu
     public const string ITEM_PROFILE = 'profile';
 
     public const string VERSION_TEMPLATE = 'SilverStripe/Betamask/Frontend/TopBar/TopBarVersion';
+
+    /**
+     * Links open in the page, not inside the bar's iframe, unless they say otherwise
+     */
+    public const string DEFAULT_TARGET = '_top';
+
+    private string $editUrl = '';
+
+    /**
+     * CMS edit link of the page the bar is shown on; the Edit page item falls
+     * back to the pages section without one
+     */
+    public function setEditUrl(string $editUrl): self
+    {
+        $this->editUrl = $editUrl;
+
+        return $this;
+    }
 
     /**
      * Menu items in display order
@@ -96,8 +114,7 @@ class TopBarMenu
             'css_modifier' => 'edit',
             'icon' => 'font-icon-edit',
             'label' => 'Edit page',
-            // Replaced with the framed page's CMS edit link once it loads
-            'link' => $this->getAdminUrl('pages'),
+            'link' => $this->editUrl !== '' ? $this->editUrl : $this->getAdminUrl('pages'),
         ];
     }
 
@@ -170,7 +187,12 @@ class TopBarMenu
                 continue;
             }
 
-            $normalised[$id] = array_merge($item, ['id' => $id], $this->normaliseEntries($item));
+            $normalised[$id] = array_merge(
+                ['target' => self::DEFAULT_TARGET],
+                $item,
+                ['id' => $id],
+                $this->normaliseEntries($item),
+            );
         }
 
         return array_values($normalised);
@@ -193,7 +215,10 @@ class TopBarMenu
             fn (mixed $entry): bool => $this->hasText($entry, 'label') && $this->hasText($entry, 'link'),
         );
 
-        return ['items' => array_values($entries)];
+        return ['items' => array_map(
+            static fn (array $entry): array => array_merge(['target' => self::DEFAULT_TARGET], $entry),
+            array_values($entries),
+        )];
     }
 
     /**
