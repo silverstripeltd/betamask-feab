@@ -4,6 +4,13 @@
 // px, not rem: the height must match the bar whatever the site's root font size.
 /* stylelint-disable declaration-no-important, declaration-property-unit-disallowed-list */
 html {
-  margin-top: 66px !important;
-  scroll-padding-top: 66px;
+  margin-top: 60px !important;
+  scroll-padding-top: 60px;
+}
+
+@media (max-width: 767.98px) {
+  html {
+    margin-top: 50px !important;
+    scroll-padding-top: 50px;
+  }
 }

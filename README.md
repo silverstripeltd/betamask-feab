@@ -39,7 +39,7 @@ The bar only appears for users who have ticked it.
 The page is rendered exactly as it is for any other visitor. For members with the bar turned on, two
 tags are then added to the HTML, and nothing else in the page changes:
 
-* a stylesheet in `<head>` that moves the page content down by the bar's height (66px) while the bar
+* a stylesheet in `<head>` that moves the page content down by the bar's height (60px, or 50px on phones) while the bar
   is expanded, so it starts below the bar instead of under it
 * a small loader script before `</body>`
 
@@ -53,14 +53,19 @@ The loader shows the bar in an iframe that sits above the page:
   at the highest `z-index`.
 
 The site's own fixed and sticky elements at the top of the page, such as a sticky header, are not
-moved. The bar sits over them while expanded. Members can collapse the bar to a small tab at the top
-of the page (button or <kbd>Esc</kbd>). The page then returns to its normal position, and the choice is
+moved. The bar sits over them while expanded. Members can collapse the bar to a small tab in the top-left
+corner with the three-line button at its start, or with <kbd>Esc</kbd>. The page then returns to its normal position, and the choice is
 remembered in the `betamask_bar_collapsed` cookie.
+
+The layout follows the Silverstripe CMS designs at three sizes. Desktop (1200px and wider) shows
+everything. Tablet (768px to 1199px) drops the site name. Below 992px, the profile menu shows the
+member's first name and "Site settings" becomes "Settings". Phones (below 768px) show a 50px bar of icon-only buttons and no
+version label.
 
 Dropdown menus are never clipped: while one is open, the iframe grows to fit it, with a transparent
 background. A click outside the menu closes it.
 
-A **Draft** or **Published** label next to **Edit page** shows which version of the page is being
+A **Draft** (yellow) or **Published** (green) label before **Edit page** shows which version of the page is being
 viewed. Clicking it reloads the page as the other version (`?stage=Stage` or `?stage=Live`).
 
 The bar is only added to top-level `GET` navigations to HTML pages. These are always left untouched:
@@ -136,10 +141,13 @@ The array order is the display order. Each item supports:
 
 | Key | Description |
 |---|---|
-| `label` | Required. Visible text. |
+| `label` | Required. Visible text, and the item's accessible name. |
+| `short_label` | Shorter text shown on narrow screens, e.g. `Settings`. |
 | `link` | Makes the item a plain link instead of a dropdown. |
 | `target` | Link target. Defaults to `_top`, the page; use `_blank` for a new tab. |
-| `icon` | Admin font icon class, e.g. `font-icon-chart-line`. |
+| `icon_url` | URL of a 22px icon image. |
+| `mobile_icon_url` | Icon image for phones, where items show only their icon (34px). |
+| `icon` | Admin font icon class, e.g. `font-icon-chart-line`, used when there is no `icon_url`. |
 | `items` | Dropdown entries, each with `label`, `link` and optional `target`. |
 | `heading` | HTML shown at the top of the dropdown. It is rendered as-is, so only pass trusted markup. |
 | `css_modifier` | Modifier for the item's `topbar__action--*` class. |

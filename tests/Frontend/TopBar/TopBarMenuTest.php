@@ -54,6 +54,19 @@ class TopBarMenuTest extends SapphireTest
         $this->assertSame('Broken links', $items[3]['items'][0]['label']);
     }
 
+    public function testBuiltInItemsCarryTheDesignIconsAndShortLabels(): void
+    {
+        $this->logInAs($this->createMember(['FirstName' => 'Ada', 'Surname' => 'Lovelace']));
+
+        $items = TopBarMenu::create()->getItems();
+
+        $this->assertStringContainsString('icons/bar/edit.svg', $items[0]['icon_url']);
+        $this->assertStringContainsString('icons/bar/mobile-edit.svg', $items[0]['mobile_icon_url']);
+        $this->assertSame('Settings', $items[1]['short_label']);
+        $this->assertSame('Ada Lovelace', $items[3]['label']);
+        $this->assertSame('Ada', $items[3]['short_label']);
+    }
+
     public function testProfileUsername(): void
     {
         $menu = TopBarMenu::create();

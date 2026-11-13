@@ -12,24 +12,35 @@
             :rel="isLink && target === '_blank' ? 'noopener' : null"
             :data-item="cssId"
         >
-            <i
-                v-if="icon"
-                aria-hidden="true"
-                :class="{
-                    [icon]: true,
-                    popup__icon: true,
-                }"
-            ></i>
-            <span class="popup__label">{{ label }}</span>
-            <i
-                v-if="!isLink"
-                aria-hidden="true"
-                :class="{
-                    'font-icon-caret-down-two': true,
-                    popup__arrow: true,
-                    'popup__arrow--open': open,
-                }"
-            ></i>
+            <span v-if="iconUrl || icon" class="popup__icon" aria-hidden="true">
+                <img
+                    v-if="iconUrl"
+                    :class="{ 'popup__icon-img': true, 'popup__icon-img--wide': mobileIconUrl }"
+                    :src="iconUrl"
+                    alt=""
+                    width="22"
+                    height="22"
+                />
+                <img
+                    v-if="mobileIconUrl"
+                    class="popup__icon-img popup__icon-img--mobile"
+                    :src="mobileIconUrl"
+                    alt=""
+                />
+                <i v-if="!iconUrl && icon" :class="['popup__font-icon', icon]"></i>
+            </span>
+            <span :class="{ popup__label: true, 'popup__label--has-short': shortLabel }">{{ label }}</span>
+            <span v-if="shortLabel" class="popup__label popup__label--short" aria-hidden="true">
+                {{ shortLabel }}
+            </span>
+            <img
+                v-if="!isLink && caretIcon"
+                :class="{ popup__caret: true, 'popup__caret--open': open }"
+                :src="caretIcon"
+                alt=""
+                width="14"
+                height="14"
+            />
         </component>
 
         <div
@@ -83,6 +94,24 @@ const props = defineProps({
     label: {
         type: String,
         required: true,
+    },
+    // Shown instead of the label on narrow screens; the label stays the accessible name
+    shortLabel: {
+        type: String,
+        default: "",
+    },
+    iconUrl: {
+        type: String,
+        default: "",
+    },
+    // Replaces iconUrl on phones, where buttons show only their icon
+    mobileIconUrl: {
+        type: String,
+        default: "",
+    },
+    caretIcon: {
+        type: String,
+        default: "",
     },
     link: {
         type: String,
