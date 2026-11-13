@@ -60,8 +60,8 @@ remembered in the `betamask_bar_collapsed` cookie.
 Dropdown menus are never clipped: while one is open, the iframe grows to fit it, with a transparent
 background. A click outside the menu closes it.
 
-The bar shows whether the page is the draft or the published version. The **Draft / Published**
-toggle reloads the page with `?stage=Stage` or `?stage=Live`.
+A **Draft** or **Published** label next to **Edit page** shows which version of the page is being
+viewed. Clicking it reloads the page as the other version (`?stage=Stage` or `?stage=Live`).
 
 The bar is only added to top-level `GET` navigations to HTML pages. These are always left untouched:
 

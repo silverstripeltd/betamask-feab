@@ -103,38 +103,31 @@
     align-items: center;
   }
 
+  // Version label next to Edit page; clicking it shows the other version
   &__stage {
-    display: inline-flex;
-    border: .1rem solid $color-grey-500;
-    border-radius: 0.4rem;
-    overflow: hidden;
+    --color: #{$color-green-200};
+    --background: #{$color-green-light};
 
-    @include media-breakpoint-down(sm) {
-      display: none;
-    }
-  }
-
-  &__stage-btn {
-    background: white;
-    border: 0;
-    padding: 0.4rem 1rem;
-    color: $color-black;
-    font-size: 1.2rem;
+    margin-left: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    border: .1rem solid var(--color);
+    border-radius: 0.2rem;
+    background: var(--background);
+    color: var(--color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04rem;
     cursor: pointer;
-
-    & + & {
-      border-left: .1rem solid $color-grey-500;
-    }
 
     &:hover,
     &:focus-visible {
-      background: $color-blue-pale;
+      background: white;
     }
 
-    &--active,
-    &--active:hover {
-      background: $color-blue-royal;
-      color: white;
+    &--draft {
+      --color: #{$color-orange};
+      --background: #{$color-orange-light};
     }
   }
 
