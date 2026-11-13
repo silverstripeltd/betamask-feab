@@ -1,19 +1,16 @@
 <template>
-    <div class="popup" ref="popupRef">
+    <div class="popup" ref="popupRef" @focusout="onFocusOut">
         <component
             :is="component"
             class="popup__btn"
             :aria-controls="isLink ? null : menuId"
             :type="isLink ? null : 'button'"
-            :aria-expanded="isLink ? null : String(isOpen)"
+            :aria-expanded="isLink ? null : String(open)"
             @click="toggle"
-            @keydown.esc.prevent="forceClose"
-            @keydown.space.prevent="handleKeyDownSpace"
-            @blur.prevent="close"
-            :href="props.link"
-            :target="isLink ? props.target : null"
-            :rel="isLink && props.target === '_blank' ? 'noopener' : null"
-            :data-item="props.cssId"
+            :href="link"
+            :target="isLink ? target : null"
+            :rel="isLink && target === '_blank' ? 'noopener' : null"
+            :data-item="cssId"
         >
             <i
                 v-if="icon"
@@ -30,14 +27,14 @@
                 :class="{
                     'font-icon-caret-down-two': true,
                     popup__arrow: true,
-                    'popup__arrow--open': isOpen,
+                    'popup__arrow--open': open,
                 }"
             ></i>
         </component>
 
         <div
             v-if="items?.length || hasSlot('heading')"
-            v-show="isOpen"
+            v-show="open"
             :id="menuId"
             class="popup__content"
         >
@@ -71,11 +68,9 @@
 import { computed, ref, useSlots } from "vue";
 import { onClickOutside } from "@vueuse/core";
 
-// Get reference to slots
 const slots = useSlots();
-// Define events to emit
+// Asks the bar to open this item (its id) or to close it (null)
 const emit = defineEmits(["onOpen"]);
-// Component props
 const props = defineProps({
     cssId: {
         type: String,
@@ -101,101 +96,48 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    heading: {
-        type: String,
-        default: "",
-    },
+    // Open state is owned by the bar, so only one menu is open at a time
     open: {
         type: Boolean,
         default: false,
     },
 });
 
-// DOM reference for entire component. Use for click outside
 const popupRef = ref(null);
-// Internal reference for when component open/close
-const openInternal = ref(props.open);
-// Reference to indicate that the content is opened. Used for keyboard action
-const keepOpen = ref(false);
 
-/**
- * Whether or not a specific slot is used
- *
- * @param name
- * @returns {boolean}
- */
 const hasSlot = (name) => !!slots[name];
 
-/**
- * Force closing the content and emit an event to parent
- */
-const forceClose = () => {
-    openInternal.value = false;
-    keepOpen.value = false;
-    emit("onOpen", null);
-};
+const isLink = computed(() => !!props.link);
 
-/**
- * Attempt to close content. It prevents closing if keep open is true
- */
-const close = (e) => {
-    if (keepOpen.value) {
-        return;
-    }
-
-    // If menu item clicked prevent the close to allow for native click to function
-    if (e.relatedTarget?.className === "popup__link") {
-        return;
-    }
-
-    forceClose();
-};
-
-/**
- * Toggle the content of the popup one/off and emit event
- */
-const toggle = () => {
-    openInternal.value = !openInternal.value;
-    emit("onOpen", !openInternal.value ? null : props.cssId);
-};
-
-/**
- * Event callback if the popup trigger click using space key
- */
-const handleKeyDownSpace = () => {
-    openInternal.value = !openInternal.value;
-    keepOpen.value = openInternal.value;
-    emit("onOpen", !openInternal.value ? null : props.cssId);
-};
-
-/**
- * Whether or not the content is opened/closed
- *
- * @type {ComputedRef<unknown>}
- */
-const isOpen = computed(() => openInternal.value || props.open);
-
-/**
- * DOM id of the dropdown, namespaced so item ids cannot clash with other elements
- *
- * @type {ComputedRef<string>}
- */
-const menuId = computed(() => `betamaskui-menu-${props.cssId}`);
-
-/**
- * Check if the component is for a link
- *
- * @type {ComputedRef<any>}
- */
-const isLink = computed(() => props.link);
-
-/**
- * Whether to use a link or a button for trigger item. Button for dropdown
- *
- * @type {ComputedRef<string>}
- */
 const component = computed(() => (isLink.value ? "a" : "button"));
 
-// If there is a click outside the component then force close the popup
-onClickOutside(popupRef, () => forceClose());
+// DOM id of the dropdown, namespaced so item ids cannot clash with other elements
+const menuId = computed(() => `betamaskui-menu-${props.cssId}`);
+
+const close = () => {
+    if (props.open) {
+        emit("onOpen", null);
+    }
+};
+
+const toggle = () => {
+    if (!isLink.value) {
+        emit("onOpen", props.open ? null : props.cssId);
+    }
+};
+
+/**
+ * Closes the menu once keyboard focus moves to another element of the bar.
+ * Focus moving nowhere (e.g. Safari on mouse clicks) is left to click-outside,
+ * so a click on a menu link is not cancelled by the menu closing first.
+ *
+ * @param {FocusEvent} e
+ */
+const onFocusOut = (e) => {
+    if (e.relatedTarget && !popupRef.value?.contains(e.relatedTarget)) {
+        close();
+    }
+};
+
+onClickOutside(popupRef, close);
 </script>

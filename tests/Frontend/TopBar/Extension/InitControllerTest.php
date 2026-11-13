@@ -2,12 +2,13 @@
 
 namespace SilverStripe\Betamask\Tests\Frontend\TopBar\Extension;
 
+use SilverStripe\Betamask\Frontend\TopBar\TopBarContext;
 use SilverStripe\Betamask\Tests\Frontend\TopBar\Extension\InitControllerTest\EditableController;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
-use SilverStripe\View\Requirements;
+use SilverStripe\Versioned\Versioned;
 
 class InitControllerTest extends SapphireTest
 {
@@ -18,104 +19,50 @@ class InitControllerTest extends SapphireTest
      */
     protected $usesDatabase = true;
 
-    private const string INLINE_SCRIPT = 'betamask-inline.js';
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        Requirements::clear();
+        TopBarContext::reset();
     }
 
-    public function testLoadsScriptAndEscapedEditLinkInsideTheFrame(): void
+    public function testRecordsEditLinkAndStage(): void
     {
         $this->logInMember(true);
 
-        $this->runInitHook(EditableController::create(), ['InlinePreview' => '1']);
+        Versioned::withVersionedMode(function (): void {
+            Versioned::set_stage(Versioned::DRAFT);
+            $this->runInitHook(EditableController::create());
+        });
 
-        $this->assertTrue($this->hasInlineScript());
-        $this->assertStringContainsString(
-            '<meta name="betamask-page-url" content="/admin/pages/edit/show/5?a=1&amp;b=&quot;2&quot;">',
-            $this->getHeadTags(),
-        );
+        $context = TopBarContext::singleton();
+        $this->assertSame(EditableController::EDIT_URL, $context->getEditUrl());
+        $this->assertSame(Versioned::DRAFT, $context->getStage());
     }
 
-    public function testRecognisesTheFrameFromFetchMetadata(): void
-    {
-        $this->logInMember(true);
-
-        $this->runInitHook(EditableController::create(), [], ['Sec-Fetch-Dest' => 'iframe']);
-
-        $this->assertTrue($this->hasInlineScript());
-    }
-
-    public function testSkipsTheEditLinkWhenControllerHasNoRecord(): void
-    {
-        $this->logInMember(true);
-
-        $this->runInitHook(Controller::create(), ['InlinePreview' => '1']);
-
-        $this->assertTrue($this->hasInlineScript());
-        $this->assertStringNotContainsString('betamask-page-url', $this->getHeadTags());
-    }
-
-    public function testDoesNothingOutsideTheFrame(): void
+    public function testControllerWithoutRecordKeepsTheEditLink(): void
     {
         $this->logInMember(true);
 
         $this->runInitHook(EditableController::create());
+        $this->runInitHook(Controller::create());
 
-        $this->assertFalse($this->hasInlineScript());
+        $this->assertSame(EditableController::EDIT_URL, TopBarContext::singleton()->getEditUrl());
     }
 
-    public function testDoesNothingInTheCmsPreview(): void
-    {
-        $this->logInMember(true);
-
-        $this->runInitHook(EditableController::create(), ['CMSPreview' => '1'], ['Sec-Fetch-Dest' => 'iframe']);
-
-        $this->assertFalse($this->hasInlineScript());
-    }
-
-    public function testDoesNothingForMembersWithoutTheFlag(): void
+    public function testRecordsNothingForMembersWithoutTheBar(): void
     {
         $this->logInMember(false);
 
-        $this->runInitHook(EditableController::create(), ['InlinePreview' => '1']);
+        $this->runInitHook(EditableController::create());
 
-        $this->assertFalse($this->hasInlineScript());
+        $this->assertSame('', TopBarContext::singleton()->getEditUrl());
     }
 
-    /**
-     * @param array<string, string> $getVars
-     * @param array<string, string> $headers
-     */
-    private function runInitHook(Controller $controller, array $getVars = [], array $headers = []): void
+    private function runInitHook(Controller $controller): void
     {
-        $request = new HTTPRequest('GET', 'page', $getVars);
-
-        foreach ($headers as $name => $value) {
-            $request->addHeader($name, $value);
-        }
-
-        $controller->setRequest($request);
+        $controller->setRequest(new HTTPRequest('GET', 'page'));
         $controller->extend('onBeforeInit');
-    }
-
-    private function hasInlineScript(): bool
-    {
-        foreach (array_keys(Requirements::backend()->getJavascript()) as $file) {
-            if (str_contains((string) $file, self::INLINE_SCRIPT)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function getHeadTags(): string
-    {
-        return implode("\n", Requirements::backend()->getCustomHeadTags());
     }
 
     private function logInMember(bool $flagged): void

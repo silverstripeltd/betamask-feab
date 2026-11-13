@@ -2,18 +2,16 @@
 
 namespace SilverStripe\Betamask\Frontend\TopBar\Extension;
 
-use SilverStripe\Betamask\Frontend\TopBar\FeatureFlag;
-use SilverStripe\Betamask\Frontend\TopBar\FrameRequest;
+use SilverStripe\Betamask\Frontend\TopBar\TopBarContext;
+use SilverStripe\Betamask\Frontend\TopBar\TopBarUI;
 use SilverStripe\Control\Controller;
-use SilverStripe\Core\Convert;
 use SilverStripe\Core\Extension;
-use SilverStripe\FeatureFlag\FeatureFlag as FeatureFlagRegistry;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\View\Requirements;
+use SilverStripe\Versioned\Versioned;
 
 /**
- * Loads the script that keeps the top bar in sync with the page shown in its
- * iframe: browser URL and title, the "Edit page" link, and closing open menus.
+ * Records the page being rendered, so the admin tool bar can link to its CMS
+ * edit form and show which reading stage it is in.
  *
  * Controllers can provide the edit link by implementing getPageEditUrl();
  * otherwise the CMS edit link of the record returned by data() is used.
@@ -23,39 +21,22 @@ use SilverStripe\View\Requirements;
 class InitController extends Extension
 {
 
-    public const string EDIT_URL_META = 'betamask-page-url';
-
-    private const string INLINE_SCRIPT = 'silverstripeltd/betamask-bao: client/dist/betamask-inline.js';
-
     public function onBeforeInit(): void
     {
-        if (!$this->isTopBarFrame()) {
+        if (!TopBarUI::isAvailableToCurrentMember()) {
             return;
         }
 
-        // Nested controllers (e.g. RootURLController then the page controller) each
-        // run this hook; Requirements de-duplicates the script, and the edit link
-        // shares a uniqueness ID so the innermost controller's record wins.
-        Requirements::javascript(self::INLINE_SCRIPT, ['type' => 'module']);
-
+        $context = TopBarContext::singleton()->setStage((string) Versioned::get_stage());
         $editUrl = $this->getPageEditUrl();
 
+        // Nested controllers (e.g. RootURLController then the page controller)
+        // each run this hook; the innermost one with a record wins.
         if ($editUrl === '') {
             return;
         }
 
-        Requirements::insertHeadTags(
-            sprintf('<meta name="%s" content="%s">', self::EDIT_URL_META, Convert::raw2att($editUrl)),
-            self::EDIT_URL_META,
-        );
-    }
-
-    protected function isTopBarFrame(): bool
-    {
-        $request = $this->getOwner()->getRequest();
-
-        return FrameRequest::isTopBarFrame($request)
-            && FeatureFlagRegistry::checkFeatureFlag(FeatureFlag::NAME);
+        $context->setEditUrl($editUrl);
     }
 
     /**

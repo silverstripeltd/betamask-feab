@@ -22,37 +22,27 @@ class FrameRequestTest extends SapphireTest
         'Sec-Fetch-Mode' => 'navigate',
     ];
 
-    public function testInlinePreviewParamMarksRequestAsFramed(): void
-    {
-        $request = $this->createRequest('about-us', ['InlinePreview' => '1']);
-
-        $this->assertTrue(FrameRequest::isFramed($request));
-        $this->assertTrue(FrameRequest::isTopBarFrame($request));
-        $this->assertFalse(FrameRequest::isPageNavigation($request));
-    }
-
     public function testIframeFetchDestinationMarksRequestAsFramed(): void
     {
         $request = $this->createRequest('about-us', [], ['Sec-Fetch-Dest' => 'iframe']);
 
         $this->assertTrue(FrameRequest::isFramed($request));
+        $this->assertFalse(FrameRequest::isPageNavigation($request));
     }
 
-    public function testCmsPreviewIsFramedButNotTheTopBarFrame(): void
+    public function testCmsPreviewIsNotAPageNavigation(): void
     {
-        $request = $this->createRequest('about-us', ['CMSPreview' => '1'], ['Sec-Fetch-Dest' => 'iframe']);
+        $request = $this->createRequest('about-us', ['CMSPreview' => '1'], ['Accept' => 'text/html']);
 
         $this->assertTrue(FrameRequest::isCmsPreview($request));
-        $this->assertTrue(FrameRequest::isFramed($request));
-        $this->assertFalse(FrameRequest::isTopBarFrame($request));
+        $this->assertFalse(FrameRequest::isPageNavigation($request));
     }
 
-    public function testUnframedRequestIsNotFramed(): void
+    public function testDocumentRequestIsNotFramed(): void
     {
         $request = $this->createRequest('about-us', [], ['Sec-Fetch-Dest' => 'document']);
 
         $this->assertFalse(FrameRequest::isFramed($request));
-        $this->assertFalse(FrameRequest::isTopBarFrame($request));
     }
 
     /**

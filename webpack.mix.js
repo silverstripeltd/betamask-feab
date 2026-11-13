@@ -31,8 +31,9 @@ mix
 // Custom CMS 5 refresh
 mix
   .js(`${srcFolder}/js/betamask-ui.js`, "/")
-  .js(`${srcFolder}/js/betamask-inline.js`, "/")
-  .sass(`${srcFolder}/scss/betamask-ui.scss`, "/", sassOptions);
+  .js(`${srcFolder}/js/betamask-loader.js`, "/")
+  .sass(`${srcFolder}/scss/betamask-ui.scss`, "/", sassOptions)
+  .sass(`${srcFolder}/scss/betamask-offset.scss`, "/", sassOptions);
 
 mix.copyDirectory(`${srcFolder}/images`, `${distFolder}/images`);
 mix.copyDirectory(`${srcFolder}/icons`, `${distFolder}/icons`);

@@ -2,32 +2,25 @@
 
 namespace SilverStripe\Betamask\Frontend\TopBar;
 
-use DomainException;
-use JsonException;
 use SilverStripe\Admin\AdminRootController;
+use SilverStripe\Betamask\Frontend\TopBar\Control\TopBarController;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Cookie;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Environment;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\FeatureFlag\FeatureFlag as FeatureFlagRegistry;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
-use SilverStripe\SiteConfig\SiteConfig;
-use SilverStripe\TemplateEngine\SSTemplateEngine;
-use SilverStripe\View\ViewLayerData;
 
 /**
- * Decides whether a request gets the front-end top bar, and renders the wrapper
- * document that shows the bar above the real page loaded in an iframe.
+ * Decides whether the admin tool bar is added to the page for the current
+ * request, and describes how the page should embed it.
  *
  * Extensions can implement updateIsEnabled(bool &$enabled) to turn the bar off
  * for further requests; getRequest() exposes the request being considered.
- * The menu itself is built, and extended, by TopBarMenu.
- *
- * @phpcs:disable SlevomatCodingStandard.Exceptions.DisallowNonCapturingCatch.DisallowedNonCapturingCatch
  */
 class TopBarUI
 {
@@ -36,45 +29,15 @@ class TopBarUI
     use Extensible;
     use Injectable;
 
-    public const string TEMPLATE = 'SilverStripe/Betamask/Frontend/TopBar/TopBar';
-
-    private const string LOGO_RESOURCE = 'silverstripeltd/betamask-bao: client/dist/images/silverstripe-logo.svg';
-
-    private const string ENV_UAT = 'uat';
-
-    private const string ENV_TEST = 'test';
-
     /**
-     * Map of Silverstripe environment types to the label shown in the bar.
-     * Environment types not listed here resolve to "uat" or "test".
-     *
-     * @config
-     * @var array<string, string>
+     * Cookie holding the member's choice to collapse the bar, shared with the loader script
      */
-    private static array $environments = [
-        'dev' => 'dev',
-        'live' => 'prod',
-    ];
-
-    /**
-     * Location of the application favicon, as a module resource reference.
-     * Set to an empty string to omit the favicon.
-     *
-     * @config
-     */
-    private static string $favicon = 'themes/app/dist/images/favicon/favicon-32x32.png';
-
-    /**
-     * Reading stage used for the framed page when the request does not choose one.
-     * Set to an empty string to show whatever stage the request resolves to.
-     *
-     * @config
-     */
-    private static string $default_stage = 'Stage';
+    public const string COLLAPSED_COOKIE = 'betamask_bar_collapsed';
 
     /**
      * URL prefixes, relative to the site base URL, that never get the bar.
-     * The admin and Security login/logout/lost-password URLs are always excluded.
+     * The admin, the bar itself, and the Security login/logout/lost-password
+     * URLs are always excluded.
      *
      * @config
      * @var string[]
@@ -87,8 +50,6 @@ class TopBarUI
     ];
 
     protected ?HTTPRequest $request = null;
-
-    protected string $iframeUrl = '';
 
     public function setRequest(HTTPRequest $request): self
     {
@@ -105,15 +66,8 @@ class TopBarUI
         return $this->request;
     }
 
-    public function setIframeUrl(string $url): self
-    {
-        $this->iframeUrl = $url;
-
-        return $this;
-    }
-
     /**
-     * Whether the current request should be replaced by the top bar wrapper
+     * Whether the bar should be added to the page for the current request
      */
     public function isEnabled(): bool
     {
@@ -121,98 +75,50 @@ class TopBarUI
             return false;
         }
 
-        $enabled = Security::getCurrentUser() instanceof Member
-            && FeatureFlagRegistry::checkFeatureFlag(FeatureFlag::NAME);
+        $enabled = self::isAvailableToCurrentMember();
         $this->extend('updateIsEnabled', $enabled);
 
         return $enabled;
     }
 
     /**
-     * Reading stage to request for the framed page, or null to leave it unchanged
+     * Whether the logged-in member has the bar turned on
      */
-    public function getFrameStage(): ?string
+    public static function isAvailableToCurrentMember(): bool
     {
-        $stage = (string) self::config()->get('default_stage');
-        $requested = $this->request instanceof HTTPRequest && $this->request->getVar('stage');
-
-        return $stage === '' || $requested
-            ? null
-            : $stage;
+        return Security::getCurrentUser() instanceof Member
+            && FeatureFlagRegistry::checkFeatureFlag(FeatureFlag::NAME);
     }
 
     /**
-     * Label of the current environment, shown next to the application name
+     * Whether the member has collapsed the bar to its tab
      */
-    public function getEnvironmentLabel(): string
+    public function isCollapsed(): bool
     {
-        $labels = (array) self::config()->get('environments');
-        $type = Director::get_environment_type();
-
-        if (array_key_exists($type, $labels)) {
-            return (string) $labels[$type];
-        }
-
-        $platformEnvironment = Environment::getEnv('CWP_ENVIRONMENT') . ' ' . Environment::getEnv('CL_ENVIRONMENT');
-
-        return str_contains(strtolower($platformEnvironment), self::ENV_UAT)
-            ? self::ENV_UAT
-            : self::ENV_TEST;
+        return Cookie::get(self::COLLAPSED_COOKIE) === '1';
     }
 
     /**
-     * Properties for the Vue top bar, encoded as JSON
-     */
-    public function getConfigJson(): string
-    {
-        $menu = TopBarMenu::create();
-        $config = [
-            'logo' => (string) ModuleResourceLoader::resourceURL(self::LOGO_RESOURCE),
-            'logoUrl' => $menu->getAdminUrl('pages'),
-            'siteUrl' => Director::absoluteBaseURL(),
-            'appName' => $this->getAppName(),
-            'appEnv' => $this->getEnvironmentLabel(),
-            'items' => $menu->getItems(),
-        ];
-
-        try {
-            return json_encode($config, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
-        } catch (JsonException) {
-            return '{}';
-        }
-    }
-
-    /**
-     * Full HTML document showing the bar with the framed page below it
+     * Site-relative URL of the bar document for a page
      *
-     * @throws DomainException when no iframe URL has been set
+     * @param string $editUrl CMS edit link of the page's record, if it has one
+     * @param string $stage Reading stage the page was rendered in, if versioned
      */
-    public function getInterface(): string
+    public function getBarUrl(string $editUrl, string $stage): string
     {
-        if (!$this->iframeUrl) {
-            throw new DomainException('Unable to find the iframe URL.');
-        }
+        $query = array_filter([
+            TopBarController::EDIT_PARAM => $editUrl,
+            TopBarController::STAGE_PARAM => $stage,
+        ]);
+        $url = Controller::join_links(Director::baseURL(), TopBarController::ROUTE);
 
-        // Rendered with the template engine directly rather than SSViewer, so no
-        // Requirements registered during this request are injected into the wrapper.
-        return SSTemplateEngine::execute_template(
-            self::TEMPLATE,
-            ViewLayerData::create([
-                'Title' => $this->getAppName(),
-                'Favicon' => (string) ModuleResourceLoader::resourceURL((string) self::config()->get('favicon')),
-                'FrameURL' => $this->iframeUrl,
-                'ConfigJson' => $this->getConfigJson(),
-            ]),
-        );
-    }
-
-    protected function getAppName(): string
-    {
-        return (string) SiteConfig::current_site_config()->getTitle();
+        return $query === []
+            ? $url
+            : $url . '?' . http_build_query($query);
     }
 
     /**
-     * Whether the request is a page navigation the bar may wrap, before
+     * Whether the request is a page navigation the bar may be added to, before
      * considering who is asking
      */
     protected function isEligibleRequest(): bool
@@ -223,7 +129,6 @@ class TopBarUI
             && $request->isGET()
             && !$request->isAjax()
             && FrameRequest::isPageNavigation($request)
-            && !FrameRequest::isCmsPreview($request)
             && !$this->isDisabledUrl($request);
     }
 
@@ -256,6 +161,7 @@ class TopBarUI
             (array) self::config()->get('disable_on_url'),
             [
                 AdminRootController::get_admin_route(),
+                TopBarController::ROUTE,
                 (string) $securityConfig->get('login_url'),
                 (string) $securityConfig->get('logout_url'),
                 (string) $securityConfig->get('lost_password_url'),

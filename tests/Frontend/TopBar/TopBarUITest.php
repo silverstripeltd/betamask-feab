@@ -2,13 +2,11 @@
 
 namespace SilverStripe\Betamask\Tests\Frontend\TopBar;
 
-use DomainException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use SilverStripe\Betamask\Frontend\TopBar\TopBarUI;
 use SilverStripe\Betamask\Tests\Frontend\TopBar\TopBarUITest\KioskExtension;
-use SilverStripe\Control\Director;
+use SilverStripe\Control\Cookie;
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Core\Environment;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
 
@@ -62,9 +60,10 @@ class TopBarUITest extends SapphireTest
     {
         $this->logInAs($this->createMember(true));
 
-        $this->assertFalse(
-            $this->createTopBar($this->createRequest('about-us', ['InlinePreview' => '1']))->isEnabled(),
-        );
+        $request = $this->createRequest('about-us');
+        $request->addHeader('Sec-Fetch-Dest', 'iframe');
+
+        $this->assertFalse($this->createTopBar($request)->isEnabled());
     }
 
     #[DataProvider('provideExcludedUrls')]
@@ -87,6 +86,7 @@ class TopBarUITest extends SapphireTest
             'lost password' => ['Security/lostpassword'],
             'change password' => ['Security/changepassword'],
             'dev tools' => ['dev/build'],
+            'the bar itself' => ['betamask-bar'],
             'assets' => ['assets/Uploads'],
             'case-insensitive' => ['SECURITY/Login'],
         ];
@@ -122,68 +122,26 @@ class TopBarUITest extends SapphireTest
         }
     }
 
-    public function testFrameStageDefaultsToConfiguredStage(): void
+    public function testCollapsedStateComesFromTheCookie(): void
     {
-        $this->assertSame('Stage', $this->createTopBar($this->createRequest('about-us'))->getFrameStage());
+        $topBar = TopBarUI::create();
+
+        Cookie::force_expiry(TopBarUI::COLLAPSED_COOKIE);
+        $this->assertFalse($topBar->isCollapsed());
+
+        Cookie::set(TopBarUI::COLLAPSED_COOKIE, '1');
+        $this->assertTrue($topBar->isCollapsed());
     }
 
-    public function testFrameStageRespectsRequestedStage(): void
+    public function testBarUrlCarriesThePageDetails(): void
     {
-        $topBar = $this->createTopBar($this->createRequest('about-us', ['stage' => 'Live']));
+        $url = TopBarUI::create()->getBarUrl('/admin/pages/edit/show/5', 'Stage');
 
-        $this->assertNull($topBar->getFrameStage());
-    }
-
-    public function testFrameStageCanBeTurnedOff(): void
-    {
-        TopBarUI::config()->set('default_stage', '');
-
-        $this->assertNull($this->createTopBar($this->createRequest('about-us'))->getFrameStage());
-    }
-
-    public function testEnvironmentLabelUsesConfiguredMap(): void
-    {
-        TopBarUI::config()->set('environments', [Director::get_environment_type() => 'local']);
-
-        $this->assertSame('local', TopBarUI::create()->getEnvironmentLabel());
-    }
-
-    public function testUnmappedEnvironmentFallsBackToUatOrTest(): void
-    {
-        TopBarUI::config()->set('environments', []);
-        $previous = Environment::getEnv('CL_ENVIRONMENT');
-
-        try {
-            Environment::setEnv('CL_ENVIRONMENT', 'client-uat');
-            $this->assertSame('uat', TopBarUI::create()->getEnvironmentLabel());
-
-            Environment::setEnv('CL_ENVIRONMENT', 'client-test');
-            $this->assertSame('test', TopBarUI::create()->getEnvironmentLabel());
-        } finally {
-            Environment::setEnv('CL_ENVIRONMENT', $previous === false ? '' : $previous);
-        }
-    }
-
-    public function testInterfaceRendersEscapedConfigAndFrame(): void
-    {
-        $this->logInAs($this->createMember(true, ['FirstName' => '"><script>alert(1)</script>', 'Surname' => '']));
-
-        $html = $this->createTopBar($this->createRequest('about-us'))
-            ->setIframeUrl('http://example.test/about-us?InlinePreview=1&stage=Stage')
-            ->getInterface();
-
-        $this->assertStringContainsString('id="betamaskui-topbar"', $html);
-        $this->assertStringContainsString('src="http://example.test/about-us?InlinePreview=1&amp;stage=Stage"', $html);
-        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
-        $this->assertStringNotContainsString('sandbox=', $html);
-        $this->assertMatchesRegularExpression('/data-config="\{&quot;logo&quot;/', $html);
-    }
-
-    public function testInterfaceRequiresIframeUrl(): void
-    {
-        $this->expectException(DomainException::class);
-
-        TopBarUI::create()->getInterface();
+        $this->assertMatchesRegularExpression(
+            '#betamask-bar/?\?edit=%2Fadmin%2Fpages%2Fedit%2Fshow%2F5&stage=Stage$#',
+            $url,
+        );
+        $this->assertMatchesRegularExpression('#betamask-bar/?$#', TopBarUI::create()->getBarUrl('', ''));
     }
 
     /**

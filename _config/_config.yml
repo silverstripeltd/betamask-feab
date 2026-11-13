@@ -26,3 +26,13 @@ SilverStripe\FeatureFlag\Extension\MemberConfiguration:
       Label: 'Admin tool bar'
       Help: |
         Enabling this feature will add an admin tool bar to the front-end of your website.
+
+---
+Name: betamaskbao_routes
+After:
+  - '#rootroutes'
+  - '#coreroutes'
+---
+SilverStripe\Control\Director:
+  rules:
+    'betamask-bar': 'SilverStripe\Betamask\Frontend\TopBar\Control\TopBarController'

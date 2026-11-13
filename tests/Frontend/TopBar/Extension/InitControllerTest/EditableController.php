@@ -11,9 +11,11 @@ use SilverStripe\Dev\TestOnly;
 class EditableController extends Controller implements TestOnly
 {
 
+    public const string EDIT_URL = '/admin/pages/edit/show/5';
+
     public function getPageEditUrl(): string
     {
-        return '/admin/pages/edit/show/5?a=1&b="2"';
+        return self::EDIT_URL;
     }
 
 }
