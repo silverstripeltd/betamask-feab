@@ -27,11 +27,22 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const MEDIA_ALL = 'all';
 const MEDIA_NONE = 'not all';
 
-// Sizes in px used until the bar reports its own; they match the bar's layout.
-const InitialSize = Object.freeze({
-  [BarState.EXPANDED]: { width: null, height: 66 },
-  [BarState.COLLAPSED]: { width: 64, height: 28 },
-});
+// Phones get the 50px bar; wider screens the 60px one (see _topbar.scss)
+const PHONE_QUERY = '(max-width: 767.98px)';
+
+/**
+ * Size in px used until the bar reports its own; matches the bar's layout
+ *
+ * @param {string} state
+ * @returns {{width: ?number, height: number}}
+ */
+function initialSize(state) {
+  const phone = window.matchMedia(PHONE_QUERY).matches;
+  if (state === BarState.COLLAPSED) {
+    return { width: 50, height: phone ? 39 : 44 };
+  }
+  return { width: null, height: phone ? 50 : 60 };
+}
 
 // Lengths are px because rem would follow the site's own root font size.
 const HOST_CSS = `
@@ -41,7 +52,7 @@ const HOST_CSS = `
     position: fixed !important;
     inset: 0 0 auto 0 !important;
     width: 100% !important;
-    height: var(--betamask-height, 66px) !important;
+    height: var(--betamask-height, 60px) !important;
     max-width: none !important;
     max-height: none !important;
     margin: 0 !important;
@@ -51,15 +62,19 @@ const HOST_CSS = `
     background: transparent !important;
     color-scheme: light !important;
     z-index: 2147483647 !important;
-    box-shadow: 0 3px 9px rgb(0 0 0 / 0.15) !important;
+    box-shadow: 0 4px 2px rgb(0 0 0 / 0.1) !important;
+  }
+  @media ${PHONE_QUERY} {
+    :host {
+      box-shadow: 0 3px 4.5px rgb(0 0 0 / 0.05) !important;
+    }
   }
   :host([data-state="menu"]) {
     box-shadow: none !important;
   }
   :host([data-state="collapsed"]) {
-    inset: 0 auto auto 50% !important;
-    transform: translateX(-50%) !important;
-    width: var(--betamask-width, 64px) !important;
+    inset: 0 auto auto 0 !important;
+    width: var(--betamask-width, 50px) !important;
     box-shadow: none !important;
   }
   .frame {
@@ -181,7 +196,7 @@ function init() {
   frame.src = script.getAttribute('data-betamask-bar');
   root.append(frame);
 
-  applyLayout(host, { state, ...InitialSize[state] });
+  applyLayout(host, { state, ...initialSize(state) });
   listen(host, frame);
   document.body.append(host);
   raise(host);

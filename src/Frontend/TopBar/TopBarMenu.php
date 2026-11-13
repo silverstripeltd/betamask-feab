@@ -7,6 +7,7 @@ use SilverStripe\Admin\LeftAndMain;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\TemplateEngine\SSTemplateEngine;
@@ -17,10 +18,13 @@ use SilverStripe\View\ViewLayerData;
  *
  * Extensions can add, change, reorder or remove items through
  * updateItems(array &$items). Items are keyed by id; each item is an array of:
- * - label (string, required): visible text
+ * - label (string, required): visible text, and the item's accessible name
+ * - short_label (string): shorter text for narrow screens, e.g. "Settings"
  * - link (string): makes the item a plain link
  * - target (string): link target, "_top" (the page) by default or e.g. "_blank"
- * - icon (string): admin font icon class, e.g. "font-icon-chart-line"
+ * - icon_url (string): URL of a 22px icon image
+ * - mobile_icon_url (string): URL of the icon image for phones, if it differs
+ * - icon (string): admin font icon class, used when there is no icon_url
  * - items (array): dropdown entries, each with label, link and optional target
  * - heading (string): trusted HTML shown at the top of the dropdown
  * - css_modifier (string): BEM modifier added to the item's wrapper class
@@ -47,6 +51,8 @@ class TopBarMenu
      * Links open in the page, not inside the bar's iframe, unless they say otherwise
      */
     public const string DEFAULT_TARGET = '_top';
+
+    private const string ICON_RESOURCE = 'silverstripeltd/betamask-bao: client/dist/icons/bar/%s.svg';
 
     private string $editUrl = '';
 
@@ -77,6 +83,22 @@ class TopBarMenu
         $this->extend('updateItems', $items);
 
         return $this->normaliseItems($items);
+    }
+
+    /**
+     * Shorter name for the profile menu on narrow screens: first name, or the
+     * full fallback name when there is no first name
+     */
+    public function getProfileShortName(): string
+    {
+        $member = Security::getCurrentUser();
+        $firstName = $member instanceof Member
+            ? trim((string) $member->FirstName)
+            : '';
+
+        return $firstName !== ''
+            ? $firstName
+            : $this->getProfileUsername();
     }
 
     /**
@@ -112,7 +134,8 @@ class TopBarMenu
     {
         return [
             'css_modifier' => 'edit',
-            'icon' => 'font-icon-edit',
+            'icon_url' => $this->getIconUrl('edit'),
+            'mobile_icon_url' => $this->getIconUrl('mobile-edit'),
             'label' => 'Edit page',
             'link' => $this->editUrl !== '' ? $this->editUrl : $this->getAdminUrl('pages'),
         ];
@@ -125,8 +148,10 @@ class TopBarMenu
     {
         return [
             'css_modifier' => 'settings',
-            'icon' => 'font-icon-menu-settings',
+            'icon_url' => $this->getIconUrl('settings'),
+            'mobile_icon_url' => $this->getIconUrl('mobile-settings'),
             'label' => 'Site settings',
+            'short_label' => 'Settings',
             'link' => $this->getAdminUrl('settings'),
         ];
     }
@@ -144,7 +169,8 @@ class TopBarMenu
 
         return [
             'css_modifier' => 'help',
-            'icon' => 'font-icon-white-question',
+            'icon_url' => $this->getIconUrl('help'),
+            'mobile_icon_url' => $this->getIconUrl('mobile-help'),
             'label' => 'Help',
             'items' => $items,
             'heading' => SSTemplateEngine::execute_template(
@@ -161,8 +187,10 @@ class TopBarMenu
     {
         return [
             'css_modifier' => 'username',
-            'icon' => 'font-icon-torso',
+            'icon_url' => $this->getIconUrl('user'),
+            'mobile_icon_url' => $this->getIconUrl('mobile-profile'),
             'label' => $this->getProfileUsername(),
+            'short_label' => $this->getProfileShortName(),
             'items' => [
                 ['link' => $this->getAdminUrl('myprofile'), 'label' => 'My profile', 'target' => '_blank'],
                 ['link' => Security::logout_url(), 'label' => 'Logout', 'target' => '_top'],
@@ -231,6 +259,14 @@ class TopBarMenu
         }
 
         return (string) $key;
+    }
+
+    /**
+     * URL of one of the bar's own icons
+     */
+    protected function getIconUrl(string $name): string
+    {
+        return (string) ModuleResourceLoader::resourceURL(sprintf(self::ICON_RESOURCE, $name));
     }
 
     private function hasText(mixed $item, string $key): bool

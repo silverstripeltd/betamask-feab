@@ -3,27 +3,37 @@
         <button
             ref="expandRef"
             type="button"
-            class="topbar-tab__btn"
+            class="topbar__menu-btn"
             aria-expanded="false"
             aria-controls="betamaskui-bar"
             @click="expand"
         >
-            <img class="topbar-tab__logo" :src="logo" alt="" />
-            <i class="topbar-tab__arrow font-icon-down-open-big" aria-hidden="true"></i>
-            <span class="topbar-tab__label">Show admin tool bar</span>
+            <img class="topbar__menu-icon" :src="menuIcon" alt="" width="20" height="15" />
+            <span class="topbar__sr-only">Show admin tool bar</span>
         </button>
     </div>
 
     <nav v-else id="betamaskui-bar" ref="barRef" class="topbar" aria-label="Admin tool bar">
         <div class="topbar__brand">
-            <div class="topbar__logo">
+            <button
+                ref="collapseRef"
+                type="button"
+                class="topbar__menu-btn"
+                aria-expanded="true"
+                aria-controls="betamaskui-bar"
+                @click="collapse"
+            >
+                <img class="topbar__menu-icon" :src="menuIcon" alt="" width="20" height="15" />
+                <span class="topbar__sr-only">Hide admin tool bar</span>
+            </button>
+            <div class="topbar__identity">
                 <a class="topbar__logo-link" :href="logoUrl" target="_blank" rel="noopener">
-                    <img class="topbar__logo-img" :src="logo" :alt="logoAlt" />
+                    <img class="topbar__logo-img" :src="logo" :alt="logoAlt" width="35" height="20" />
                 </a>
+                <span class="topbar__divider" aria-hidden="true"></span>
+                <a class="topbar__name" target="_blank" rel="noopener" :href="siteUrl">{{ appName }}</a>
+                <span :class="`topbar__badge topbar__env ${appEnvCss}`">{{ appEnv }}</span>
             </div>
-            <div class="topbar__divider"></div>
-            <a class="topbar__name" target="_blank" rel="noopener" :href="siteUrl">{{ appName }}</a>
-            <span :class="`topbar__env ${appEnvCss}`">{{ appEnv }}</span>
         </div>
 
         <div class="topbar__actions">
@@ -35,12 +45,26 @@
                     [`topbar__action--${item.css_modifier}`]: item.css_modifier,
                 }"
             >
+                <button
+                    v-if="item.id === EDIT_ITEM_ID && currentStage"
+                    type="button"
+                    :class="`topbar__badge topbar__stage topbar__stage--${currentStage.modifier}`"
+                    :title="currentStage.action"
+                    :aria-label="`${currentStage.status}. ${currentStage.action}`"
+                    @click="showStage(currentStage.switchTo)"
+                >
+                    {{ currentStage.label }}
+                </button>
                 <PopupItem
                     @onOpen="setCurrentOpen"
                     :css-id="item.id"
                     :label="item.label"
+                    :short-label="item.short_label"
                     :open="isOpen(item.id)"
                     :icon="item.icon"
+                    :icon-url="item.icon_url"
+                    :mobile-icon-url="item.mobile_icon_url"
+                    :caret-icon="caretIcon"
                     :link="item.link"
                     :target="item.target"
                     :items="item.items"
@@ -49,28 +73,7 @@
                         <div v-html="item.heading"></div>
                     </template>
                 </PopupItem>
-                <button
-                    v-if="item.id === EDIT_ITEM_ID && currentStage"
-                    type="button"
-                    :class="`topbar__stage topbar__stage--${currentStage.modifier}`"
-                    :title="currentStage.action"
-                    :aria-label="`${currentStage.status}. ${currentStage.action}`"
-                    @click="showStage(currentStage.switchTo)"
-                >
-                    {{ currentStage.label }}
-                </button>
             </div>
-            <button
-                ref="collapseRef"
-                type="button"
-                class="topbar__collapse"
-                aria-expanded="true"
-                aria-controls="betamaskui-bar"
-                @click="collapse"
-            >
-                <i class="font-icon-up-open-big" aria-hidden="true"></i>
-                <span class="topbar__collapse-label">Hide admin tool bar</span>
-            </button>
         </div>
     </nav>
 </template>
@@ -83,6 +86,14 @@ import { BarState, MessageType } from "../../betamask-protocol";
 
 const props = defineProps({
     logo: {
+        type: String,
+        default: "",
+    },
+    menuIcon: {
+        type: String,
+        default: "",
+    },
+    caretIcon: {
         type: String,
         default: "",
     },

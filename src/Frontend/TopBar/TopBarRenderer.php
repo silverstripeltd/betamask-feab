@@ -25,7 +25,7 @@ class TopBarRenderer
 
     public const string TEMPLATE = 'SilverStripe/Betamask/Frontend/TopBar/TopBar';
 
-    private const string LOGO_RESOURCE = 'silverstripeltd/betamask-bao: client/dist/images/silverstripe-logo.svg';
+    private const string ICON_RESOURCE = 'silverstripeltd/betamask-bao: client/dist/icons/bar/%s.svg';
 
     private const string ENV_UAT = 'uat';
 
@@ -74,7 +74,9 @@ class TopBarRenderer
     {
         $menu = TopBarMenu::create()->setEditUrl($editUrl);
         $config = [
-            'logo' => (string) ModuleResourceLoader::resourceURL(self::LOGO_RESOURCE),
+            'logo' => $this->getIconUrl('glyph'),
+            'menuIcon' => $this->getIconUrl('menu'),
+            'caretIcon' => $this->getIconUrl('caret'),
             'logoUrl' => (string) self::config()->get('logo_url'),
             'siteUrl' => Director::absoluteBaseURL(),
             'appName' => $this->getAppName(),
@@ -108,6 +110,11 @@ class TopBarRenderer
         return str_contains(strtolower($platformEnvironment), self::ENV_UAT)
             ? self::ENV_UAT
             : self::ENV_TEST;
+    }
+
+    protected function getIconUrl(string $name): string
+    {
+        return (string) ModuleResourceLoader::resourceURL(sprintf(self::ICON_RESOURCE, $name));
     }
 
     protected function getAppName(): string
