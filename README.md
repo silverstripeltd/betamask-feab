@@ -36,35 +36,44 @@ The bar only appears for users who have ticked it.
 
 ## How it works
 
-When a user with the bar enabled navigates to a front-end page, the response is a small wrapper
-document: the tool bar at the top and the real page loaded below it in an iframe. The page is
-rendered only once, by the iframe request, so its status code, headers, form messages and other
-side effects behave exactly as they do without the bar.
+The page is rendered exactly as it is for any other visitor. For members with the bar turned on, two
+tags are then added to the HTML, and nothing else in the page changes:
 
-The wrapper is only served for top-level HTML page navigations made with `GET`. These requests are
-always passed through untouched:
+* a stylesheet in `<head>` that moves the page content down by the bar's height (66px) while the bar
+  is expanded, so it starts below the bar instead of under it
+* a small loader script before `</body>`
 
-* `fetch()`/XHR calls, sub-resources, and anything that does not accept HTML
+The loader shows the bar in an iframe that sits above the page:
+
+* The bar is a separate document, so the site's CSS and scripts cannot change how it looks or behaves,
+  and clicks on it never reach the site's own click handlers or analytics.
+* The iframe lives in a closed shadow root, so site selectors and `querySelectorAll()` never match it.
+* The bar sits in the browser's top layer (the popover API), above anything the site can stack,
+  whatever its `z-index`, `transform` or `overflow`. Browsers without popover support keep it fixed
+  at the highest `z-index`.
+
+The site's own fixed and sticky elements at the top of the page, such as a sticky header, are not
+moved. The bar sits over them while expanded. Members can collapse the bar to a small tab at the top
+of the page (button or <kbd>Esc</kbd>). The page then returns to its normal position, and the choice is
+remembered in the `betamask_bar_collapsed` cookie.
+
+Dropdown menus are never clipped: while one is open, the iframe grows to fit it, with a transparent
+background. A click outside the menu closes it.
+
+The bar shows whether the page is the draft or the published version. The **Draft / Published**
+toggle reloads the page with `?stage=Stage` or `?stage=Live`.
+
+The bar is only added to top-level `GET` navigations to HTML pages. These are always left untouched:
+
+* `fetch()`/XHR calls, sub-resources, frames, and anything that does not accept HTML
+* responses that are not HTML pages: redirects, files, JSON, XML, and HTML fragments
 * URLs with a file extension (`sitemap.xml`, `robots.txt`, downloads) and `assets/`
-* the CMS (`admin/`), `dev/`, and the Security login, logout and password pages
-* the CMS preview panel (`CMSPreview=1`)
+* the CMS (`admin/`), `dev/`, the Security login, logout and password pages, and the CMS preview panel
 
-Inside the iframe, a small script keeps the bar in step with the page. It updates the browser
-address bar and title, points **Edit page** at the current page, and closes open menus when the
-page is clicked. It marks internal links and form submissions with `InlinePreview=1`, which keeps
-them in the frame on browsers that send no Fetch Metadata headers, such as on plain-HTTP
-development sites. External links open in the top window.
+Pages that carry the bar are marked as uncacheable, as they are personalised. Pages for every other
+visitor are not changed in any way.
 
-The framed page is shown in the draft (`Stage`) reading mode unless the URL asks for another stage.
-
-The iframe keeps the bar completely separate from the site: the site's CSS, layout and scripts
-cannot affect the bar, and the bar cannot affect the site. Because the site runs inside a frame:
-
-* The site must allow same-origin framing. `X-Frame-Options: SAMEORIGIN` or
-  `frame-ancestors 'self'` are fine; `DENY` or `'none'` leave the frame blank.
-* Scripts that break out of frames (`if (top !== self) top.location = ...`) take the page out of the bar.
-* Third-party flows that refuse to be framed, such as some payment or sign-in providers, need their
-  form or link to target `_top`. Links to other sites already open in the top window.
+A site with a Content Security Policy needs `'self'` allowed for scripts, styles and frames.
 
 ## Configuration
 
@@ -73,10 +82,8 @@ SilverStripe\Betamask\Frontend\TopBar\TopBarUI:
   # Never show the bar under these URL prefixes (relative to the site root)
   disable_on_url:
     - 'shop/checkout/'
-  # Reading stage for the framed page; '' keeps the request's own stage
-  default_stage: 'Stage'
-  # Favicon of the wrapper document; '' to omit it
-  favicon: 'themes/app/dist/images/favicon/favicon-32x32.png'
+
+SilverStripe\Betamask\Frontend\TopBar\TopBarRenderer:
   # Label shown for each environment type; others show "uat" or "test"
   environments:
     dev: 'dev'
@@ -129,7 +136,7 @@ The array order is the display order. Each item supports:
 |---|---|
 | `label` | Required. Visible text. |
 | `link` | Makes the item a plain link instead of a dropdown. |
-| `target` | Link target, e.g. `_blank`. |
+| `target` | Link target. Defaults to `_top`, the page; use `_blank` for a new tab. |
 | `icon` | Admin font icon class, e.g. `font-icon-chart-line`. |
 | `items` | Dropdown entries, each with `label`, `link` and optional `target`. |
 | `heading` | HTML shown at the top of the dropdown. It is rendered as-is, so only pass trusted markup. |
