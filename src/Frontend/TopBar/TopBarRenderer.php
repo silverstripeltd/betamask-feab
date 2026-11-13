@@ -32,6 +32,13 @@ class TopBarRenderer
     private const string ENV_TEST = 'test';
 
     /**
+     * Where the Silverstripe logo at the start of the bar links to; opens in a new tab
+     *
+     * @config
+     */
+    private static string $logo_url = 'https://www.silverstripe.org/';
+
+    /**
      * Map of Silverstripe environment types to the label shown in the bar.
      * Environment types not listed here resolve to "uat" or "test".
      *
@@ -68,7 +75,7 @@ class TopBarRenderer
         $menu = TopBarMenu::create()->setEditUrl($editUrl);
         $config = [
             'logo' => (string) ModuleResourceLoader::resourceURL(self::LOGO_RESOURCE),
-            'logoUrl' => $menu->getAdminUrl('pages'),
+            'logoUrl' => (string) self::config()->get('logo_url'),
             'siteUrl' => Director::absoluteBaseURL(),
             'appName' => $this->getAppName(),
             'appEnv' => $this->getEnvironmentLabel(),

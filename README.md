@@ -84,6 +84,8 @@ SilverStripe\Betamask\Frontend\TopBar\TopBarUI:
     - 'shop/checkout/'
 
 SilverStripe\Betamask\Frontend\TopBar\TopBarRenderer:
+  # Where the Silverstripe logo links to (opens in a new tab)
+  logo_url: 'https://www.silverstripe.org/'
   # Label shown for each environment type; others show "uat" or "test"
   environments:
     dev: 'dev'

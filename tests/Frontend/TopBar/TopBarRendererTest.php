@@ -21,6 +21,7 @@ class TopBarRendererTest extends SapphireTest
     {
         $config = $this->decodeConfig('/admin/pages/edit/show/5', 'Stage', true);
 
+        $this->assertSame('https://www.silverstripe.org/', $config['logoUrl']);
         $this->assertSame('Stage', $config['stage']);
         $this->assertTrue($config['collapsed']);
         $this->assertSame('/admin/pages/edit/show/5', $config['items'][0]['link']);
