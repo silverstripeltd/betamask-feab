@@ -17,7 +17,7 @@
     <nav v-else id="betamaskui-bar" ref="barRef" class="topbar" aria-label="Admin tool bar">
         <div class="topbar__brand">
             <div class="topbar__logo">
-                <a class="topbar__logo-link" :href="logoUrl" target="_top">
+                <a class="topbar__logo-link" :href="logoUrl" target="_blank" rel="noopener">
                     <img class="topbar__logo-img" :src="logo" :alt="logoAlt" />
                 </a>
             </div>
@@ -88,11 +88,11 @@ const props = defineProps({
     },
     logoAlt: {
         type: String,
-        default: "Go to the CMS",
+        default: "Silverstripe CMS website (opens in a new tab)",
     },
     logoUrl: {
         type: String,
-        default: "/admin",
+        default: "https://www.silverstripe.org/",
     },
     siteUrl: {
         type: String,
