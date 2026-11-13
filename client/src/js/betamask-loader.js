@@ -37,11 +37,10 @@ const PHONE_QUERY = '(max-width: 767.98px)';
  * @returns {{width: ?number, height: number}}
  */
 function initialSize(state) {
-  const phone = window.matchMedia(PHONE_QUERY).matches;
   if (state === BarState.COLLAPSED) {
-    return { width: 50, height: phone ? 39 : 44 };
+    return { width: 64, height: 28 };
   }
-  return { width: null, height: phone ? 50 : 60 };
+  return { width: null, height: window.matchMedia(PHONE_QUERY).matches ? 50 : 60 };
 }
 
 // Lengths are px because rem would follow the site's own root font size.
@@ -73,8 +72,8 @@ const HOST_CSS = `
     box-shadow: none !important;
   }
   :host([data-state="collapsed"]) {
-    inset: 0 auto auto 0 !important;
-    width: var(--betamask-width, 50px) !important;
+    inset: 0 auto auto 15px !important;
+    width: var(--betamask-width, 64px) !important;
     box-shadow: none !important;
   }
   .frame {
