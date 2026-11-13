@@ -53,8 +53,8 @@ The loader shows the bar in an iframe that sits above the page:
   at the highest `z-index`.
 
 The site's own fixed and sticky elements at the top of the page, such as a sticky header, are not
-moved. The bar sits over them while expanded. Members can collapse the bar to a small tab in the top-left
-corner with the three-line button at its start, or with <kbd>Esc</kbd>. The page then returns to its normal position, and the choice is
+moved. The bar sits over them while expanded. Members can collapse the bar with the three-line button at its
+start, or with <kbd>Esc</kbd>, to a small pull-tab at the top left of the page. The page then returns to its normal position, and the choice is
 remembered in the `betamask_bar_collapsed` cookie.
 
 The layout follows the Silverstripe CMS designs at three sizes. Desktop (1200px and wider) shows

@@ -3,12 +3,13 @@
         <button
             ref="expandRef"
             type="button"
-            class="topbar__menu-btn"
+            class="topbar-tab__btn"
             aria-expanded="false"
             aria-controls="betamaskui-bar"
             @click="expand"
         >
-            <img class="topbar__menu-icon" :src="menuIcon" alt="" width="20" height="15" />
+            <img class="topbar-tab__logo" :src="logo" alt="" width="35" height="20" />
+            <i class="topbar-tab__arrow font-icon-down-open-big" aria-hidden="true"></i>
             <span class="topbar__sr-only">Show admin tool bar</span>
         </button>
     </div>
