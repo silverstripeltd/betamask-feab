@@ -24,21 +24,6 @@
             <div class="topbar__divider"></div>
             <a class="topbar__name" target="_blank" rel="noopener" :href="siteUrl">{{ appName }}</a>
             <span :class="`topbar__env ${appEnvCss}`">{{ appEnv }}</span>
-            <div v-if="stage" class="topbar__stage" role="group" aria-label="Content version">
-                <button
-                    v-for="option in STAGE_OPTIONS"
-                    :key="option.stage"
-                    type="button"
-                    :class="{
-                        'topbar__stage-btn': true,
-                        'topbar__stage-btn--active': option.stage === stage,
-                    }"
-                    :aria-pressed="String(option.stage === stage)"
-                    @click="showStage(option.stage)"
-                >
-                    {{ option.label }}
-                </button>
-            </div>
         </div>
 
         <div class="topbar__actions">
@@ -64,6 +49,16 @@
                         <div v-html="item.heading"></div>
                     </template>
                 </PopupItem>
+                <button
+                    v-if="item.id === EDIT_ITEM_ID && currentStage"
+                    type="button"
+                    :class="`topbar__stage topbar__stage--${currentStage.modifier}`"
+                    :title="currentStage.action"
+                    :aria-label="`${currentStage.status}. ${currentStage.action}`"
+                    @click="showStage(currentStage.switchTo)"
+                >
+                    {{ currentStage.label }}
+                </button>
             </div>
             <button
                 ref="collapseRef"
@@ -126,10 +121,24 @@ const props = defineProps({
 });
 
 const ENV = ["dev", "test", "uat", "prod"];
-const STAGE_OPTIONS = Object.freeze([
-    { stage: "Stage", label: "Draft" },
-    { stage: "Live", label: "Published" },
-]);
+// The version label sits next to this item
+const EDIT_ITEM_ID = "edit";
+const STAGES = Object.freeze({
+    Stage: {
+        label: "Draft",
+        modifier: "draft",
+        status: "Viewing the draft",
+        action: "Switch to published",
+        switchTo: "Live",
+    },
+    Live: {
+        label: "Published",
+        modifier: "published",
+        status: "Viewing the published version",
+        action: "Switch to draft",
+        switchTo: "Stage",
+    },
+});
 // Room below an open menu for its shadow, in px of the iframe
 const MENU_SHADOW_SPACE = 16;
 
@@ -146,6 +155,9 @@ const setCurrentOpen = (id) => {
 };
 
 const isOpen = (id) => String(id) === String(currentOpen.value);
+
+// Version of the page being viewed, or null when the page is not versioned
+const currentStage = computed(() => STAGES[props.stage] || null);
 
 const appEnvCss = computed(() => {
     const env = String(props.appEnv).toLowerCase();
@@ -224,9 +236,7 @@ const expand = async () => {
 };
 
 const showStage = (stage) => {
-    if (stage !== props.stage) {
-        notifyPage({ type: MessageType.STAGE, stage });
-    }
+    notifyPage({ type: MessageType.STAGE, stage });
 };
 
 /**
