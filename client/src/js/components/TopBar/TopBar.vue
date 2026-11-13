@@ -248,6 +248,12 @@ const onKeydown = (e) => {
     collapse();
 };
 
+/**
+ * A click on the page outside the bar happens in another document; the bar only
+ * sees its own window lose focus, which closes any open menu.
+ */
+const onWindowBlur = () => setCurrentOpen(null);
+
 watch(currentOpen, () => nextTick(reportLayout));
 
 onMounted(() => {
@@ -255,10 +261,12 @@ onMounted(() => {
     observe();
     reportLayout();
     document.addEventListener("keydown", onKeydown);
+    window.addEventListener("blur", onWindowBlur);
 });
 
 onBeforeUnmount(() => {
     resizeObserver?.disconnect();
     document.removeEventListener("keydown", onKeydown);
+    window.removeEventListener("blur", onWindowBlur);
 });
 </script>
